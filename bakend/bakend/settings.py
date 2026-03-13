@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -25,7 +25,7 @@ from datetime import timedelta
 import environ
 
 env = environ.Env()
-env_file = BASE_DIR.parent / '.env'  # .env 文件在父目录
+env_file = BASE_DIR.parent / '.env'  
 environ.Env.read_env(env_file)
 
 
@@ -133,7 +133,12 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated', #全局权限设置，默认所有接口需要认证
-    ),  
+    ),
+    # 为TokenObtainPairView允许匿名访问
+    'DEFAULT_PERMISSION_CLASSES_BY_VIEW': {
+        'rest_framework_simplejwt.views.TokenObtainPairView': 'rest_framework.permissions.AllowAny',
+        'rest_framework_simplejwt.views.TokenRefreshView': 'rest_framework.permissions.AllowAny',
+    },
 }
 
 SIMPLE_JWT = {

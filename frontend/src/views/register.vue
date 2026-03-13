@@ -5,6 +5,7 @@
       <div class="form-group">
         <input 
           v-model="username" 
+          type="text" 
           placeholder="用户名" 
           required
         />
@@ -37,18 +38,22 @@
         />
       </div>
       
-      <div class="form-group">
-        <input 
-          v-model="firstName" 
-          placeholder="姓（可选）"
-        />
-      </div>
-      
-      <div class="form-group">
-        <input 
-          v-model="lastName" 
-          placeholder="名（可选）"
-        />
+      <div class="form-row">
+        <div class="form-group half">
+          <input 
+            v-model="firstName" 
+            type="text" 
+            placeholder="姓（可选）"
+          />
+        </div>
+        
+        <div class="form-group half">
+          <input 
+            v-model="lastName" 
+            type="text" 
+            placeholder="名（可选）"
+          />
+        </div>
       </div>
       
       <button type="submit" :disabled="loading">
@@ -56,17 +61,22 @@
       </button>
     </form>
     
-    <p v-if="error" class="error">{{ error }}</p>
-    <p v-if="success" class="success">{{ success }}</p>
+    <div v-if="error" class="error">
+      <p v-for="(msg, index) in errorMessages" :key="index">{{ msg }}</p>
+    </div>
+    
+    <div v-if="success" class="success">
+      {{ success }}
+    </div>
     
     <router-link to="/login">已有账号？去登录</router-link>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import axios from 'axios'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from '../axios'
 
 const router = useRouter()
 
@@ -80,22 +90,34 @@ const lastName = ref('')
 
 // UI状态
 const loading = ref(false)
-const error = ref('')
+const error = ref(null)
 const success = ref('')
 
+// 格式化错误消息
+const errorMessages = computed(() => {
+  if (!error.value) return []
+  if (typeof error.value === 'string') return [error.value]
+  return Object.entries(error.value).map(([field, msg]) => `${field}: ${msg}`)
+})
+
 const handleRegister = async () => {
-  // 简单前端验证
+  // 前端验证
   if (password.value !== password2.value) {
-    error.value = '两次输入的密码不一致'
+    error.value = { password: '两次输入的密码不一致' }
+    return
+  }
+  
+  if (password.value.length < 6) {
+    error.value = { password: '密码长度至少6位' }
     return
   }
   
   loading.value = true
-  error.value = ''
+  error.value = null
   success.value = ''
   
   try {
-    const response = await axios.post('/api/auth/register/', {
+    const response = await axios.post('/auth/register/', {
       username: username.value,
       email: email.value,
       password: password.value,
@@ -104,32 +126,18 @@ const handleRegister = async () => {
       last_name: lastName.value
     })
     
-    // 注册成功
-    success.value = '注册成功！正在跳转到登录页...'
+    success.value = '注册成功！2秒后跳转到登录页...'
     
-    // 2秒后跳转到登录页
+    // 2秒后跳转
     setTimeout(() => {
       router.push('/login')
     }, 2000)
     
   } catch (err) {
-    // 处理后端返回的错误
     if (err.response && err.response.data) {
-      // 提取所有错误信息
-      const errorData = err.response.data
-      const errorMessages = []
-      
-      for (const field in errorData) {
-        if (Array.isArray(errorData[field])) {
-          errorMessages.push(`${field}: ${errorData[field].join(' ')}`)
-        } else {
-          errorMessages.push(`${field}: ${errorData[field]}`)
-        }
-      }
-      
-      error.value = errorMessages.join('； ')
+      error.value = err.response.data
     } else {
-      error.value = '注册失败，请稍后重试'
+      error.value = { error: '注册失败，请稍后重试' }
     }
   } finally {
     loading.value = false
@@ -139,33 +147,63 @@ const handleRegister = async () => {
 
 <style scoped>
 .register-container {
-  max-width: 400px;
+  max-width: 500px;
   margin: 50px auto;
-  padding: 20px;
-  border: 1px solid #ccc;
+  padding: 30px;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.form-group.half {
+  flex: 1;
+  margin-bottom: 0;
 }
 
 input {
   width: 100%;
-  padding: 8px;
+  padding: 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
+  font-size: 16px;
   box-sizing: border-box;
+}
+
+input:focus {
+  outline: none;
+  border-color: #42b983;
 }
 
 button {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background-color: #42b983;
   color: white;
   border: none;
   border-radius: 4px;
+  font-size: 16px;
   cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #3aa876;
 }
 
 button:disabled {
@@ -174,20 +212,31 @@ button:disabled {
 }
 
 .error {
-  color: red;
-  margin-top: 10px;
+  color: #f44336;
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #ffebee;
+  border-radius: 4px;
 }
 
 .success {
-  color: green;
-  margin-top: 10px;
+  color: #4caf50;
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+  text-align: center;
 }
 
 a {
   display: block;
-  margin-top: 15px;
+  margin-top: 20px;
   text-align: center;
   color: #42b983;
   text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
 }
 </style>
