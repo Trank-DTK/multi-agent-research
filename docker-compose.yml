@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  db:
+    image: ankane/pgvector:latest # 预装pgvector扩展的PostgreSQL
+    container_name: research_db
+    environment:
+      POSTGRES_DB: agent_db
+      POSTGRES_USER: agent_user
+      POSTGRES_PASSWORD: agent_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U agent_user -d agent_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - research_network
+
+  web:
+    build: .
+    container_name: research_web
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./bakend:/app
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://agent_user:agent_password@db:5432/agent_db
+      SECRET_KEY: ${SECRET_KEY:-django-insecure-docker-dev-key}
+      DEBUG: "True"
+      ALLOWED_HOSTS: localhost,127.0.0.1,web
+    restart: unless-stopped
+    networks:
+      - research_network
+
+volumes:
+  postgres_data:
+  media_volume:
+
+
+networks:
+  research_network:
+    driver: bridge
