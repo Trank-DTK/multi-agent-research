@@ -2,9 +2,10 @@ from rest_framework import serializers
 
 class ChatMessageSerializer(serializers.Serializer):
     """聊天请求序列化器"""
-    sender = serializers.CharField(max_length=100)
+    sender = serializers.CharField(max_length=100, required=False, allow_blank=True)
     message = serializers.CharField()
-    timestamp = serializers.DateTimeField()
+    conversation_id = serializers.IntegerField(required=False, allow_null=True)
+    timestamp = serializers.DateTimeField(required=False, allow_null=True)
 
 
 class ChatResponseSerializer(serializers.Serializer):
