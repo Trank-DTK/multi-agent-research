@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/login.vue'
 import Register from '../views/register.vue'
 import Dashboard from '../views/dashboard.vue'
+import Chat from '../views/chat.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +28,12 @@ const router = createRouter({
     {
       path: '/',
       redirect: '/login'
+    },
+    {
+      path: '/chat',
+      name: 'chat',
+      component: Chat,
+      meta: { requiresAuth: true }
     }
   ]
 })

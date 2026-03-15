@@ -10,8 +10,9 @@
     
     <main>
       <div class="welcome-card">
-        <h2>第1周开发完成！ 🎉</h2>
-        <p>用户认证系统已就绪，下周将开始集成Ollama和LangChain</p>
+        <h2>第2周开发中！ 🚀</h2>
+        <p>AI对话功能已集成，点击下方按钮开始体验</p>
+        <router-link to="/chat" class="chat-btn">开始对话</router-link>
       </div>
       
       <div class="stats">
@@ -20,6 +21,8 @@
           <p>基础框架 ✓</p>
           <p>用户认证 ✓</p>
           <p>Docker编排 ✓</p>
+          <p>Ollama集成 ✓</p>
+          <p>LangChain入门 ✓</p>
         </div>
       </div>
     </main>
@@ -32,7 +35,7 @@ import { useRouter } from 'vue-router'
 import axios from '../axios'
 
 const router = useRouter()
-const user = ref(null)
+const user = ref(null)   //初始值为null，表示尚未获取用户信息
 
 // 获取用户信息
 const fetchUserInfo = async () => {
@@ -51,6 +54,7 @@ const logout = () => {
   router.push('/login')
 }
 
+// 组件挂载时获取用户信息
 onMounted(() => {
   fetchUserInfo()
 })
@@ -126,4 +130,19 @@ main {
   margin-top: 0;
   color: #42b983;
 }
+
+.chat-btn {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 10px 20px;
+  background-color: #42b983;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.chat-btn:hover {
+  background-color: #3aa876;
+}
+
 </style>

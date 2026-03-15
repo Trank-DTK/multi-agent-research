@@ -14,6 +14,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
+      # 每10秒检查一次，超时时间5秒，失败5次为不健康
       test: [ "CMD-SHELL", "pg_isready -U agent_user -d agent_db" ]
       interval: 10s
       timeout: 5s
@@ -29,15 +30,15 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - ./bakend:/app
+      - ./bakend:/app   
       - media_volume:/app/media
     ports:
       - "8000:8000"
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy   # 确保数据库服务健康后再启动web服务
     environment:
-      DATABASE_URL: postgres://agent_user:agent_password@db:5432/agent_db
+      DATABASE_URL: postgres://agent_user:agent_password@db:5432/agent_db   # 数据库连接字符串，指向db服务
       SECRET_KEY: ${SECRET_KEY:-django-insecure-docker-dev-key}
       DEBUG: "True"
       ALLOWED_HOSTS: localhost,127.0.0.1,web

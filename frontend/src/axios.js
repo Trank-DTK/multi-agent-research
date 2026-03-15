@@ -27,9 +27,10 @@ instance.interceptors.response.use(
       originalRequest._retry = true
       try {
         const refresh = localStorage.getItem('refresh')
-        // 注意：刷新 token 的请求也要用 instance
+        // 刷新 token 的请求也要用 instance
         const res = await instance.post('/auth/refresh/', { refresh })
         localStorage.setItem('access', res.data.access)
+        // 更新原始请求的 Authorization 头
         originalRequest.headers.Authorization = `Bearer ${res.data.access}`
         return instance(originalRequest)
       } catch (refreshError) {
