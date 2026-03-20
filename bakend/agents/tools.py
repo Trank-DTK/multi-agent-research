@@ -10,10 +10,12 @@ class CurrentTimeTool(BaseTool):
     description:str = "获取当前时间，输入任意字符串即可"
     
     def _run(self, query: str = "") -> str:
+        """同步执行"""
         now = datetime.now()
         return f"当前时间是：{now.strftime('%Y-%m-%d %H:%M:%S')}"
     
     async def _arun(self, query: str = "") -> str:
+        """异步调用"""
         return self._run(query)
 
 

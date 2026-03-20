@@ -27,4 +27,5 @@ urlpatterns = [
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/user/", UserDetailView.as_view(), name="user_detail"),
     path("api/", include("chat.urls")),
+    path("api/",include("agents.urls")),
 ]
