@@ -3,6 +3,7 @@ import Login from '../views/login.vue'
 import Register from '../views/register.vue'
 import Dashboard from '../views/dashboard.vue'
 import Chat from '../views/chat.vue'
+import AgentChat from '@/views/AgentChat.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,7 +35,14 @@ const router = createRouter({
       name: 'chat',
       component: Chat,
       meta: { requiresAuth: true }
-    }
+    },
+    {
+      path: '/agent',
+      name: 'agent',
+      component: AgentChat,
+      meta: { requiresAuth: true }
+    },
+
   ]
 })
 
