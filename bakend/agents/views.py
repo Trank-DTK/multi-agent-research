@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from langchain_classic.memory import ConversationBufferMemory
 from .agent import create_agent
-from ..chat.models import Conversation, Message
+from chat.models import Conversation, Message
 
 # 存储每个会话的Agent实例（简单内存缓存）
 agent_instances = {}

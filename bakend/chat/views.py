@@ -115,9 +115,9 @@ class ConversationDetailView(APIView):
     """获取单个会话的消息列表"""
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, conversation_id):
+    def get(self, request, conv_id):
         try:
-            conversation = get_object_or_404(Conversation, id=conversation_id, user=request.user)
+            conversation = get_object_or_404(Conversation, id=conv_id, user=request.user)
             messages = conversation.messages.all()
             data = [{
                 "id": msg.id,

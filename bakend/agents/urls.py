@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AgentChatView, AgentResetView
+from agents.views import AgentChatView, AgentResetView
 
 urlpatterns = [
     path('agent/chat/', AgentChatView.as_view(), name='agent_chat'),

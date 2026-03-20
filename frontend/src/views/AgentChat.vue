@@ -62,7 +62,7 @@ const sendMessage = async () => {
   loading.value = true
   
   try {
-    const response = await axios.post('/api/agent/chat/', {
+    const response = await axios.post('/agent/chat/', {
       message: userMessage,
       conversation_id: conversationId.value
     })

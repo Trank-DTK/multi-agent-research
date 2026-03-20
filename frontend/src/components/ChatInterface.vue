@@ -92,6 +92,7 @@ const formatTime = (timestamp) => {
 const fetchConversations = async () => {
   try {
     const response = await axios.get('/chat/conversations/')
+    console.log('对话列表:', response.data)
     conversations.value = response.data
   } catch (error) {
     console.error('获取对话列表失败:', error)
@@ -100,8 +101,10 @@ const fetchConversations = async () => {
 
 // 加载指定对话
 const loadConversation = async (convId) => {
+  console.log('加载对话:', convId, typeof convId)
   try {
     const response = await axios.get(`/chat/conversations/${convId}/`)
+    console.log('对话数据:', response.data)
     messages.value = response.data
     currentConversationId.value = convId
     await scrollToBottom()
