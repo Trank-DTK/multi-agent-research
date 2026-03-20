@@ -2,7 +2,6 @@ import json
 import os
 import platform
 from collections import deque
-import threading
 from django.http import JsonResponse,StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
@@ -31,7 +30,7 @@ def get_ollama_base_url():
 
 
 
-#自定义流式回调，用于Django StreamingHttpResponse    (?)
+#自定义流式回调，用于Django StreamingHttpResponse   
 class StreamingCallbackHandler(BaseCallbackHandler):
     def __init__(self, queue):
         self.queue = queue
@@ -151,7 +150,7 @@ class ConversationDeleteView(APIView):
             return JsonResponse({"error": str(e)}, status=404)
 
 
-# (?)
+
 class ChatStreamView(APIView):
     """流式聊天窗口"""
     permission_classes = [IsAuthenticated]
