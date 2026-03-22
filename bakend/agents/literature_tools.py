@@ -49,7 +49,7 @@ class SummarizeDocumentTool(BaseTool):
                 doc = Document.objects.get(id=int(query), user=self.user)
             else:
                 # 按标题模糊查找
-                doc = Document.objects.filter(user=self.user, title__icontains=query).first()
+                doc = Document.objects.filter(user=self.user, title__icontains=query).first()  #不区分大小写包含匹配
                 if not doc:
                     return f"未找到文献：{query}"
             
