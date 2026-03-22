@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "accounts",
     "agents",
     "chat",
+    "documents",
 ]
 
 MIDDLEWARE = [
