@@ -3,7 +3,7 @@ import os
 import PyPDF2
 from django.core.files.storage import default_storage
 from langchain_community.embeddings import OllamaEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from .models import Document, DocumentChunk
 from agents.agent import get_ollama_base_url
 
