@@ -23,10 +23,10 @@ class LiteratureAgentView(APIView):
         agent_key = f"literature_{user.id}_{conversation_id}" if conversation_id else f"literature_{user.id}"
         
         if agent_key not in agent_instances:
-            agent = create_literature_agent(user, verbose=False)
-            agent_instances[agent_key] = agent
+            agent = create_literature_agent(user, verbose=False)  # 创建新实例
+            agent_instances[agent_key] = agent   # 缓存
         else:
-            agent = agent_instances[agent_key]
+            agent = agent_instances[agent_key]   # 复用缓存
         
         try:
             response = agent.run(message)
@@ -47,6 +47,6 @@ class LiteratureAgentResetView(APIView):
         agent_key = f"literature_{user.id}"
         
         if agent_key in agent_instances:
-            del agent_instances[agent_key]
+            del agent_instances[agent_key]    #删除缓存的Agent
         
         return JsonResponse({'message': '对话已重置'})

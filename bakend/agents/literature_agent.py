@@ -25,10 +25,10 @@ def create_literature_agent(user, memory=None, verbose=True):
     agent = initialize_agent(
         tools=tools,
         llm=llm,
-        agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION,
+        agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION,  #有记忆，可使用工具，ReAct类型
         memory=memory,
         verbose=verbose,
-        handle_parsing_errors=True
+        handle_parsing_errors=True   #自动捕获异常并调试
     )
     
     return agent
