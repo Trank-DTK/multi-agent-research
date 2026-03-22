@@ -28,4 +28,5 @@ urlpatterns = [
     path("api/auth/user/", UserDetailView.as_view(), name="user_detail"),
     path("api/", include("chat.urls")),
     path("api/",include("agents.urls")),
+    path("api/",include("documents.urls")),
 ]
