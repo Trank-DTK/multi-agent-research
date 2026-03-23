@@ -13,6 +13,8 @@
         <h2>第2周开发中！ 🚀</h2>
         <p>AI对话功能已集成，点击下方按钮开始体验</p>
         <router-link to="/chat" class="chat-btn">开始对话</router-link>
+        <router-link to="/documents" class="nav-btn">📚 文献管理</router-link>
+        <router-link to="/literature" class="nav-btn">📖 文献助手</router-link>
       </div>
       
       <div class="stats">

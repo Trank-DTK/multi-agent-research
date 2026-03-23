@@ -13,14 +13,13 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # 指向包含 accounts, agents 等应用的目录
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 
-import os
 from datetime import timedelta
 import environ
 
@@ -49,6 +48,7 @@ INSTALLED_APPS = [
     "agents",
     "chat",
     "documents",
+    "pgvector",
 ]
 
 MIDDLEWARE = [
@@ -87,11 +87,15 @@ WSGI_APPLICATION = "bakend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# 使用SQLite进行本地开发
+# 使用PostgreSQL进行生产环境（支持pgvector）
 DATABASES = {
     "default": {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'agent_db',
+        'USER': 'agent_user',
+        'PASSWORD': 'agent_password',
+        'HOST': 'db',
+        'PORT': '5432',
     }
 }
 
@@ -155,7 +159,5 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173", # 前端开发服务器地址
-    "http://127.0.0.1:5173", 
+    "http://127.0.0.1:5173",
 ]
-
-from pgvector.django import VectorExtension

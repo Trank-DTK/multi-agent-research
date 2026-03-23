@@ -4,6 +4,8 @@ import Register from '../views/register.vue'
 import Dashboard from '../views/dashboard.vue'
 import Chat from '../views/chat.vue'
 import AgentChat from '@/views/AgentChat.vue'
+import Documents from '@/views/Documents.vue'
+import LiteratureChat from '@/views/LiteratureChat.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +42,18 @@ const router = createRouter({
       path: '/agent',
       name: 'agent',
       component: AgentChat,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/documents',
+      name: 'documents',
+      component: Documents,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/literature',
+      name: 'literature',
+      component: LiteratureChat,
       meta: { requiresAuth: true }
     },
 

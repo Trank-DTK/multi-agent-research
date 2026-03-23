@@ -34,7 +34,7 @@ class DocumentChunk(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='chunks')
     chunk_index = models.IntegerField(verbose_name='分块序号')
     content = models.TextField(verbose_name='文本内容')
-    embedding = VectorField(dimensions=1536, verbose_name='向量')  # qwen2.5的向量维度
+    embedding = VectorField(dimensions=3072, verbose_name='向量')  # qwen2.5:7b 使用 3072 维向量
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

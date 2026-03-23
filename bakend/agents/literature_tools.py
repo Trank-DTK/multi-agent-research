@@ -2,11 +2,15 @@
 from langchain_classic.tools import BaseTool
 from documents.services import VectorService
 from documents.models import Document
+from typing import Optional,Any
 
 class SearchLiteratureTool(BaseTool):
     """检索文献的工具"""
-    name = "search_literature"
-    description = "在已上传的文献库中检索相关内容。输入你的问题，工具会返回最相关的文献片段"
+    name:str = "search_literature"
+    description:str = "在已上传的文献库中检索相关内容。输入你的问题，工具会返回最相关的文献片段"
+
+    user:Optional[Any] = None
+    vector_service:Optional[VectorService] = None
     
     def __init__(self, user):
         super().__init__()
@@ -35,8 +39,10 @@ class SearchLiteratureTool(BaseTool):
 
 class SummarizeDocumentTool(BaseTool):
     """总结文献的工具"""
-    name = "summarize_document"
-    description = "总结指定文献的内容。输入文献ID或标题"
+    name:str = "summarize_document"
+    description:str = "总结指定文献的内容。输入文献ID或标题"
+
+    user:Optional[Any] = None
     
     def __init__(self, user):
         super().__init__()
