@@ -1,5 +1,4 @@
 # 多智能体协作API
-import asyncio
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -7,8 +6,8 @@ from rest_framework import status
 from .orchestrator import TaskOrchestrator
 from .literature_agent import create_literature_agent
 from .experiment_agent import create_experiment_agent
-from ..documents.services import VectorService
-from ..chat.models import Conversation, Message
+from documents.services import VectorService
+from chat.models import Conversation, Message
 
 # 存储编排器实例
 orchestrator_instances = {}
@@ -21,10 +20,10 @@ class CollaborationResearchView(APIView):
         user = request.user
         question = request.data.get('question')
         conversation_id = request.data.get('conversation_id')
-        
+
         if not question:
             return JsonResponse({'error': '研究问题不能为空'}, status=400)
-        
+
         # 获取或创建对话
         if conversation_id:
             try:
@@ -36,44 +35,46 @@ class CollaborationResearchView(APIView):
                 user=user,
                 title=question[:20] + '...' if len(question) > 20 else question
             )
-        
+
         # 保存用户消息
         Message.objects.create(
             conversation=conversation,
             role='user',
             content=question
         )
-        
-        # 获取或创建编排器
+
+        # 获取或创建编排器（使用用户ID作为key）
         orchestrator_key = f"orchestrator_{user.id}"
         if orchestrator_key not in orchestrator_instances:
             orchestrator = TaskOrchestrator(user)
-            
+
             # 创建智能体
             vector_service = VectorService()
-            literature_agent = create_literature_agent(user, verbose=False)
-            experiment_agent = create_experiment_agent(user, vector_service, verbose=False)
-            
+            # 使用False关闭verbose，减少输出和内存
+            literature_agent = create_literature_agent(user, memory=None, verbose=False)
+            experiment_agent = create_experiment_agent(user, vector_service, memory=None, verbose=False)
+
             # 注册智能体
             orchestrator.register_agents(
                 literature_agent=literature_agent,
                 experiment_agent=experiment_agent
             )
-            
+
             orchestrator_instances[orchestrator_key] = orchestrator
         else:
             orchestrator = orchestrator_instances[orchestrator_key]
-        
-        # 异步执行研究任务
+
+        # 执行后清理已完成的orchestrator实例，避免内存泄漏
+        if len(orchestrator_instances) > 5:
+            # 保留最近5个，清理其他
+            sorted_keys = sorted(orchestrator_instances.keys())
+            for key in sorted_keys[:-5]:
+                del orchestrator_instances[key]
+
+        # 同步执行研究任务
         try:
-            # 使用asyncio运行异步任务
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            results = loop.run_until_complete(
-                orchestrator.execute_research_task(question, conversation)
-            )
-            loop.close()
-            
+            results = orchestrator.execute_research_task(question, conversation)
+
             # 保存助手回复
             final_report = results.get('final_report', '')
             if final_report:
@@ -82,7 +83,7 @@ class CollaborationResearchView(APIView):
                     role='assistant',
                     content=final_report[:2000]  # 限制长度
                 )
-            
+
             return JsonResponse({
                 'response': final_report[:1000],
                 'conversation_id': conversation.id,
@@ -91,8 +92,10 @@ class CollaborationResearchView(APIView):
                     'experiment_design': results.get('experiment_design', '')[:500]
                 }
             })
-            
+
         except Exception as e:
+            import sys, traceback
+            traceback.print_exc(file=sys.stderr)
             return JsonResponse({'error': str(e)}, status=500)
 
 

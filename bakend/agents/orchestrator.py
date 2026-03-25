@@ -23,19 +23,19 @@ class AgentOrchestrator:
         """获取智能体实例"""
         return self.agents.get(name)
     
-    async def run_workflow(self, workflow_type: str, input_data: Dict) -> Dict:
+    def run_workflow(self, workflow_type: str, input_data: Dict) -> Dict:
         """运行工作流"""
-        
+
         if workflow_type == "research_pipeline":
-            return await self._research_pipeline(input_data)
+            return self._research_pipeline(input_data)
         elif workflow_type == "experiment_design":
-            return await self._experiment_design_workflow(input_data)
+            return self._experiment_design_workflow(input_data)
         elif workflow_type == "literature_review":
-            return await self._literature_review_workflow(input_data)
+            return self._literature_review_workflow(input_data)
         else:
             return {"error": f"未知工作流类型: {workflow_type}"}
     
-    async def _research_pipeline(self, input_data: Dict) -> Dict:
+    def _research_pipeline(self, input_data: Dict) -> Dict:
         """完整研究流程：文献调研 -> 实验设计 -> 方案整合"""
         
         research_question = input_data.get("question", "")
@@ -119,7 +119,7 @@ class AgentOrchestrator:
         
         return results
     
-    async def _experiment_design_workflow(self, input_data: Dict) -> Dict:
+    def _experiment_design_workflow(self, input_data: Dict) -> Dict:
         """实验设计工作流"""
         research_topic = input_data.get("topic", "")
         
@@ -137,7 +137,7 @@ class AgentOrchestrator:
         
         return results
     
-    async def _literature_review_workflow(self, input_data: Dict) -> Dict:
+    def _literature_review_workflow(self, input_data: Dict) -> Dict:
         """文献综述工作流"""
         query = input_data.get("query", "")
         
@@ -170,9 +170,9 @@ class TaskOrchestrator:
         if experiment_agent:
             self.agent_orchestrator.register_agent("experiment", experiment_agent)
     
-    async def execute_research_task(self, question: str, conversation=None) -> Dict:
+    def execute_research_task(self, question: str, conversation=None) -> Dict:
         """执行研究任务"""
-        
+
         # 创建任务记录
         task = Task.objects.create(
             user=self.user,
@@ -181,7 +181,7 @@ class TaskOrchestrator:
             description=question,
             status='running'
         )
-        
+
         try:
             # 记录步骤
             step1 = TaskStep.objects.create(
@@ -192,10 +192,10 @@ class TaskOrchestrator:
                 order=1,
                 status='running'
             )
-            
+
             # 执行工作流
-            results = await self.agent_orchestrator.run_workflow(
-                "research_pipeline", 
+            results = self.agent_orchestrator.run_workflow(
+                "research_pipeline",
                 {"question": question}
             )
             

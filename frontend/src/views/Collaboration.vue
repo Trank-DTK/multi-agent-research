@@ -33,17 +33,17 @@
       <div class="result-content">
         <div v-if="activeTab === 'report'" class="report">
           <h3>研究方案报告</h3>
-          <div class="markdown-content">{{ formatContent(result.response) }}</div>
+          <div class="markdown-content" v-html="formatContent(result.response)"></div>
         </div>
         
         <div v-if="activeTab === 'literature'" class="literature">
           <h3>文献调研结果</h3>
-          <div class="markdown-content">{{ formatContent(result.results?.literature_review || '无') }}</div>
+          <div class="markdown-content" v-html="formatContent(result.results?.literature_review || '无')"></div>
         </div>
         
         <div v-if="activeTab === 'experiment'" class="experiment">
           <h3>实验设计方案</h3>
-          <div class="markdown-content">{{ formatContent(result.results?.experiment_design || '无') }}</div>
+          <div class="markdown-content" v-html="formatContent(result.results?.experiment_design || '无')"></div>
         </div>
       </div>
     </div>
@@ -77,13 +77,56 @@ const activeTab = ref('report')
 const literatureStatus = ref('等待中')
 const experimentStatus = ref('等待中')
 
+const escapeHtml = (text) => {
+  if (!text) return ''
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 const formatContent = (content) => {
   if (!content) return ''
-  // 简单处理换行和列表
-  return content
-    .replace(/\n/g, '<br>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+
+  // 先转义HTML特殊字符
+  let formatted = escapeHtml(content)
+
+  // 处理标题
+  formatted = formatted.replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+  formatted = formatted.replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+  formatted = formatted.replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+
+  // 处理无序列表
+  formatted = formatted.replace(/^\s*[-*+] (.*?)$/gm, '<li>$1</li>')
+
+  // 处理有序列表
+  formatted = formatted.replace(/^\s*\d+\. (.*?)$/gm, '<li>$1</li>')
+
+  // 如果有列表项，包裹在ul或ol中（简化处理）
+  if (formatted.includes('<li>')) {
+    formatted = formatted.replace(/<li>(.*?)<\/li>/g, '<ul><li>$1</li></ul>')
+    // 合并相邻的ul标签
+    formatted = formatted.replace(/<\/ul>\s*<ul>/g, '')
+  }
+
+  // 处理粗体
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+
+  // 处理斜体
+  formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>')
+
+  // 处理换行：两个以上换行符作为段落分隔，单个换行作为<br>
+  formatted = formatted.replace(/\n\s*\n/g, '</p><p>')
+  formatted = formatted.replace(/\n/g, '<br>')
+
+  // 包裹在段落中
+  if (!formatted.startsWith('<h') && !formatted.startsWith('<ul') && !formatted.startsWith('<li')) {
+    formatted = '<p>' + formatted + '</p>'
+  }
+
+  return formatted
 }
 
 const startResearch = async () => {
@@ -95,7 +138,7 @@ const startResearch = async () => {
   experimentStatus.value = '等待中'
   
   try {
-    const response = await axios.post('/api/collaboration/research/', {
+    const response = await axios.post('/collaboration/research/', {
       question: researchQuestion.value
     })
     

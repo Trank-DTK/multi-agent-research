@@ -2,13 +2,16 @@
 from langchain_classic.tools import BaseTool
 from datetime import datetime
 import json
+from typing import Optional,Any
 
 class DesignExperimentTool(BaseTool):
     """设计实验方案的工具"""
-    name = "design_experiment"
-    description = """根据研究问题和相关文献，设计实验方案。
+    name: str = "design_experiment"
+    description: str = """根据研究问题和相关文献，设计实验方案。
 输入格式：研究问题描述，可包含关键词。
 输出包含：实验目标、假设、实验步骤、所需材料、预期结果。"""
+
+    llm:Optional[Any] = None
     
     def __init__(self, llm=None):
         super().__init__()
@@ -45,10 +48,13 @@ class DesignExperimentTool(BaseTool):
 
 class ValidateHypothesisTool(BaseTool):
     """验证假设的工具"""
-    name = "validate_hypothesis"
-    description = """根据文献证据验证研究假设。
+    name: str = "validate_hypothesis"
+    description: str = """根据文献证据验证研究假设。
 输入格式：假设陈述
 输出：基于文献的支持/反对证据"""
+
+    user:Optional[Any] = None
+    vector_service:Optional[Any] = None
     
     def __init__(self, user, vector_service=None):
         super().__init__()
@@ -81,10 +87,12 @@ class ValidateHypothesisTool(BaseTool):
 
 class GenerateMethodologyTool(BaseTool):
     """生成研究方法论的工具"""
-    name = "generate_methodology"
-    description = """根据研究领域生成研究方法论建议。
+    name: str = "generate_methodology"
+    description: str = """根据研究领域生成研究方法论建议。
 输入格式：研究领域（如：机器学习、生物信息学、材料科学）
 输出：推荐的研究方法、分析技术、工具等"""
+
+    llm:Optional[Any] = None
     
     def __init__(self, llm=None):
         super().__init__()
@@ -118,10 +126,12 @@ class GenerateMethodologyTool(BaseTool):
 
 class LiteratureToExperimentTool(BaseTool):
     """将文献发现转化为实验建议的工具"""
-    name = "literature_to_experiment"
-    description = """基于文献检索结果，生成实验建议。
+    name: str = "literature_to_experiment"
+    description: str = """基于文献检索结果，生成实验建议。
 输入格式：文献摘要或研究问题
 输出：可操作的实验建议"""
+
+    llm:Optional[Any] = None
     
     def __init__(self, llm=None):
         super().__init__()
