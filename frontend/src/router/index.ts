@@ -7,6 +7,7 @@ import AgentChat from '@/views/AgentChat.vue'
 import Documents from '@/views/Documents.vue'
 import LiteratureChat from '@/views/LiteratureChat.vue'
 import Collaboration from '@/views/Collaboration.vue'
+import CollaborationWithReview from '@/views/CollaborationWithReview.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -61,6 +62,12 @@ const router = createRouter({
       path: '/collaboration',
       name: 'collaboration',
       component: Collaboration,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/collaboration-review',
+      name: 'collaboration-review',
+      component: CollaborationWithReview,
       meta: { requiresAuth: true }
     },
 
