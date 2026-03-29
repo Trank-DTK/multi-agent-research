@@ -60,7 +60,11 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "agents.audit_middleware.AuditMiddleware",  # 审计中间件
 ]
+
+AUDIT_LOG_ENABLED = True  # 启用审计日志
+
 
 ROOT_URLCONF = "bakend.urls"
 
