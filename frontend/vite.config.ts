@@ -20,7 +20,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',   //Django后端服务器
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         ws: true,
@@ -41,6 +41,7 @@ export default defineConfig({
         },
       },
     },
+    host: '0.0.0.0',   // 监听所有接口
     port: 5173,
     strictPort: false,   //如果端口被占用，自动寻找下一个可用端口
   }

@@ -16,7 +16,7 @@ class CurrentTimeTool(BaseTool):
     
     async def _arun(self, query: str = "") -> str:
         """异步调用"""
-        return self._run(query)
+        return await self._run(query)
 
 
 class RandomNumberTool(BaseTool):
@@ -37,7 +37,7 @@ class RandomNumberTool(BaseTool):
             return f"错误：{str(e)}"
     
     async def _arun(self, query: str) -> str:
-        return self._run(query)
+        return await self._run(query)
 
 
 class CalculatorTool(BaseTool):
@@ -57,4 +57,4 @@ class CalculatorTool(BaseTool):
             return f"计算错误：{str(e)}"
     
     async def _arun(self, query: str) -> str:
-        return self._run(query)
+        return await self._run(query)

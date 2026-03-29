@@ -46,19 +46,28 @@ class CollaborationResearchView(APIView):
         # 获取或创建编排器（使用用户ID作为key）
         orchestrator_key = f"orchestrator_{user.id}"
         if orchestrator_key not in orchestrator_instances:
+            print(f"[DEBUG] 创建新的 orchestrator，用户ID: {user.id}")
             orchestrator = TaskOrchestrator(user)
 
             # 创建智能体
             vector_service = VectorService()
+            print(f"[DEBUG] VectorService 创建成功")
+
             # 使用False关闭verbose，减少输出和内存
+            print(f"[DEBUG] 开始创建 literature_agent")
             literature_agent = create_literature_agent(user, memory=None, verbose=False)
+            print(f"[DEBUG] literature_agent 创建成功")
+
+            print(f"[DEBUG] 开始创建 experiment_agent")
             experiment_agent = create_experiment_agent(user, vector_service, memory=None, verbose=False)
+            print(f"[DEBUG] experiment_agent 创建成功")
 
             # 注册智能体
             orchestrator.register_agents(
                 literature_agent=literature_agent,
                 experiment_agent=experiment_agent
             )
+            print(f"[DEBUG] 智能体注册完成")
 
             orchestrator_instances[orchestrator_key] = orchestrator
         else:
@@ -104,7 +113,7 @@ class CollaborationStatusView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, task_id):
-        from .orchestrator import Task
+        from .models import Task
         try:
             task = Task.objects.get(id=task_id, user=request.user)
             steps = task.steps.all()

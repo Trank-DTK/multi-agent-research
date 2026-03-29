@@ -43,7 +43,7 @@ class DesignExperimentTool(BaseTool):
             return f"实验设计失败：{str(e)}"
     
     async def _arun(self, query: str) -> str:
-        return self._run(query)
+        return await self._run(query)
 
 
 class ValidateHypothesisTool(BaseTool):
@@ -82,7 +82,7 @@ class ValidateHypothesisTool(BaseTool):
             return f"假设验证失败：{str(e)}"
     
     async def _arun(self, query: str) -> str:
-        return self._run(query)
+        return await self._run(query)
 
 
 class GenerateMethodologyTool(BaseTool):
@@ -121,7 +121,7 @@ class GenerateMethodologyTool(BaseTool):
             return f"方法论生成失败：{str(e)}"
     
     async def _arun(self, query: str) -> str:
-        return self._run(query)
+        return await self._run(query)
 
 
 class LiteratureToExperimentTool(BaseTool):
@@ -159,4 +159,4 @@ class LiteratureToExperimentTool(BaseTool):
             return f"实验建议生成失败：{str(e)}"
     
     async def _arun(self, query: str) -> str:
-        return self._run(query)
+        return await self._run(query)

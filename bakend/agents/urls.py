@@ -2,6 +2,7 @@ from django.urls import path
 from agents.views import AgentChatView, AgentResetView
 from .literature_views import LiteratureAgentView,LiteratureAgentResetView
 from .collaboration_views import CollaborationResearchView,CollaborationStatusView
+from .critic_views import CollaborationWithReviewView,QuickEvaluateView
 
 urlpatterns = [
     path('agent/chat/', AgentChatView.as_view(), name='agent_chat'),
@@ -10,4 +11,6 @@ urlpatterns = [
     path('literature/reset/',LiteratureAgentResetView.as_view(),name='literature_reset'),
     path('collaboration/research/',CollaborationResearchView.as_view(),name='collaboration_research'),
     path('collaboration/status/<int:task_id>/',CollaborationStatusView.as_view(),name='collaboration_status'),
+    path('collaboration/review/',CollaborationWithReviewView.as_view(),name='collaboration_review'),
+    path('critic/evaluate/',QuickEvaluateView.as_view(),name='quick_evaluate'),
 ]

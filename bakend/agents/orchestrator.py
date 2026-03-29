@@ -1,7 +1,7 @@
 # 任务编排器
-from datetime import datetime
+from django.utils import timezone
 from typing import Dict
-from .models import Task,TaskStep
+from .models import Task, TaskStep
 
 
 
@@ -49,21 +49,26 @@ class AgentOrchestrator:
         literature_agent = self.get_agent("literature")
         if literature_agent:
             try:
-                lit_result = literature_agent.run(
-                    f"请帮我调研以下研究问题的相关文献：{research_question}\n"
-                    "请提供：1. 核心研究成果 2. 主要方法 3. 研究空白"
-                )
+                print("正在调用 literature_agent.run()...")
+                prompt = f"请帮我调研以下研究问题：{research_question}\n"
+                lit_result = literature_agent.run(prompt)
+                print(f"文献调研成功，结果长度：{len(str(lit_result))}")
                 results["literature_review"] = lit_result
             except Exception as e:
+                print(f"文献调研失败：{type(e).__name__}: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 results["literature_review"] = f"文献调研失败：{str(e)}"
         else:
             results["literature_review"] = "文献助手未注册"
-        
+            print("警告：文献助手未注册")
+
         # 步骤2：基于文献设计实验
         print("步骤2: 实验设计...")
         experiment_agent = self.get_agent("experiment")
         if experiment_agent:
             try:
+                print("正在调用 experiment_agent.run()...")
                 exp_prompt = f"""请根据以下文献调研结果，设计实验方案：
 
 研究问题：{research_question}
@@ -72,13 +77,18 @@ class AgentOrchestrator:
 {results.get('literature_review', '无')}
 
 请设计详细的实验方案。"""
-                
+
                 exp_result = experiment_agent.run(exp_prompt)
+                print(f"实验设计成功，结果长度：{len(str(exp_result))}")
                 results["experiment_design"] = exp_result
             except Exception as e:
+                print(f"实验设计失败：{type(e).__name__}: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 results["experiment_design"] = f"实验设计失败：{str(e)}"
         else:
             results["experiment_design"] = "实验助手未注册"
+            print("警告：实验助手未注册")
         
         # 步骤3：整合方案
         print("步骤3: 整合方案...")
@@ -202,9 +212,9 @@ class TaskOrchestrator:
             # 更新步骤状态
             step1.status = 'completed'
             step1.output_data = results.get('literature_review', '')[:500]
-            step1.completed_at = datetime.now()
+            step1.completed_at = timezone.now()
             step1.save()
-            
+
             step2 = TaskStep.objects.create(
                 task=task,
                 agent_name="experiment",
@@ -214,7 +224,7 @@ class TaskOrchestrator:
                 status='completed'
             )
             step2.output_data = results.get('experiment_design', '')[:500]
-            step2.completed_at = datetime.now()
+            step2.completed_at = timezone.now()
             step2.save()
             
             # 更新任务状态

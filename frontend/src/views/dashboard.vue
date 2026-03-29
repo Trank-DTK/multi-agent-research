@@ -16,6 +16,7 @@
         <router-link to="/documents" class="nav-btn">📚 文献管理</router-link>
         <router-link to="/literature" class="nav-btn">📖 文献助手</router-link>
         <router-link to="/collaboration" class="nav-btn">🤝 协作研究</router-link>
+        <router-link to="/collaboration-review" class="nav-btn">智能评审协作</router-link>
       </div>
       
       <div class="stats">

@@ -1,7 +1,6 @@
 # 编排器（带有反馈循环）
 import time
 from typing import Dict, List
-from .critic_agent import CriticService
 from .orchestrator import TaskOrchestrator
 from .audit_middleware import AuditLogService
 
@@ -10,64 +9,79 @@ class FeedbackOrchestrator(TaskOrchestrator):
     
     def __init__(self, user):
         super().__init__(user)
-        self.critic = CriticService()
+        self._critic = None  # 懒加载CriticService
         self.max_retries = 2  # 最大重试次数
+
+    @property
+    def critic(self):
+        """懒加载CriticService,避免循环导入"""
+        if self._critic is None:
+            from .critic_agent import CriticService
+            self._critic = CriticService()
+        return self._critic
     
     def execute_research_task_with_feedback(self, question: str, conversation=None) -> Dict:
         """带反馈循环的研究任务"""
-        
+
         start_time = time.time()
-        
-        # 第一步：执行研究任务
-        results = super().execute_research_task(question, conversation)
-        
-        if 'error' in results:
-            return results
-        
-        literature_review = results.get('literature_review', '')
-        experiment_design = results.get('experiment_design', '')
-        
-        # 第二步：Critic评估
-        evaluation = self.critic.full_evaluation(
-            question,
-            literature_review,
-            experiment_design
-        )
-        
-        results['evaluation'] = evaluation
-        
-        # 记录审计日志
-        AuditLogService.log(
-            user=self.user,
-            action_type='critic_evaluation',
-            action_name='研究任务评审',
-            input_data=question[:500],
-            output_data=f"综合评分: {evaluation['overall_score']}, 通过: {evaluation['passed']}",
-            duration_ms=int((time.time() - start_time) * 1000)
-        )
-        
-        # 第三步：如果评分低于阈值，尝试优化
-        if not evaluation['passed'] and self.max_retries > 0:
-            results['optimization_attempted'] = True
-            improved_results = self._optimize_research(
-                question, 
-                literature_review, 
-                experiment_design,
-                evaluation['suggestions']
+
+        try:
+            # 第一步：执行研究任务
+            results = super().execute_research_task(question, conversation)
+
+            if 'error' in results:
+                return results
+
+            literature_review = results.get('literature_review', '')
+            experiment_design = results.get('experiment_design', '')
+
+            # 第二步：Critic评估
+            evaluation = self.critic.full_evaluation(
+                question,
+                literature_review,
+                experiment_design
             )
-            
-            if improved_results:
-                results.update(improved_results)
-                # 再次评估优化后的结果
-                new_evaluation = self.critic.full_evaluation(
+
+            results['evaluation'] = evaluation
+
+            # 记录审计日志
+            AuditLogService.log(
+                user=self.user,
+                action_type='critic_evaluation',
+                action_name='研究任务评审',
+                input_data=question[:500],
+                output_data=f"综合评分: {evaluation['overall_score']}, 通过: {evaluation['passed']}",
+                duration_ms=int((time.time() - start_time) * 1000)
+            )
+
+            # 第三步：如果评分低于阈值，尝试优化
+            if not evaluation['passed'] and self.max_retries > 0:
+                results['optimization_attempted'] = True
+                improved_results = self._optimize_research(
                     question,
-                    improved_results.get('literature_review', ''),
-                    improved_results.get('experiment_design', '')
+                    literature_review,
+                    experiment_design,
+                    evaluation['suggestions']
                 )
-                results['improved_evaluation'] = new_evaluation
-                results['improved'] = new_evaluation['passed']
-        
-        return results
+
+                if improved_results:
+                    results.update(improved_results)
+                    # 再次评估优化后的结果
+                    new_evaluation = self.critic.full_evaluation(
+                        question,
+                        improved_results.get('literature_review', ''),
+                        improved_results.get('experiment_design', '')
+                    )
+                    results['improved_evaluation'] = new_evaluation
+                    results['improved'] = new_evaluation['passed']
+
+            return results
+
+        except Exception as e:
+            import traceback
+            error_msg = f"Feedback orchestrator failed: {str(e)}\n{traceback.format_exc()}"
+            print(f"[ERROR] {error_msg}")
+            return {"error": error_msg}
     
     def _optimize_research(self, question: str, literature: str, 
                                   experiment: str, suggestions: List[str]) -> Dict:

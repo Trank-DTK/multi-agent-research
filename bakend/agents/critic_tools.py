@@ -1,6 +1,6 @@
 # 评审Agent工具
 from langchain_classic.tools import BaseTool
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import json
 
 class QualityEvaluatorTool(BaseTool):
@@ -9,6 +9,8 @@ class QualityEvaluatorTool(BaseTool):
     description: str = """评估研究内容的质量，返回评分和改进建议。
 输入格式：需要评估的文本内容
 输出：综合评分(1-10)、各维度评分、改进建议"""
+
+    llm:Optional[Any] = None  
     
     def __init__(self, llm=None):
         super().__init__()
@@ -51,7 +53,7 @@ class QualityEvaluatorTool(BaseTool):
             return f"质量评估失败：{str(e)}"
     
     async def _arun(self, content: str) -> str:
-        return self._run(content)
+        return await self._run(content)
 
 
 class ConsistencyCheckerTool(BaseTool):
@@ -60,6 +62,8 @@ class ConsistencyCheckerTool(BaseTool):
     description: str = """检查研究内容之间的一致性，如文献调研与实验设计是否匹配。
 输入格式：第一部分内容 | 第二部分内容
 输出：一致性评分和矛盾点"""
+
+    llm:Optional[Any] = None  
     
     def __init__(self, llm=None):
         super().__init__()
@@ -103,7 +107,7 @@ class ConsistencyCheckerTool(BaseTool):
             return f"一致性检查失败：{str(e)}"
     
     async def _arun(self, query: str) -> str:
-        return self._run(query)
+        return await self._run(query)
 
 
 class FeasibilityCheckerTool(BaseTool):
@@ -112,6 +116,8 @@ class FeasibilityCheckerTool(BaseTool):
     description: str = """评估实验方案的可行性。
 输入格式：实验设计方案
 输出：可行性评分、资源需求、潜在风险"""
+
+    llm:Optional[Any] = None  
     
     def __init__(self, llm=None):
         super().__init__()
@@ -147,7 +153,7 @@ class FeasibilityCheckerTool(BaseTool):
             return f"可行性检查失败：{str(e)}"
     
     async def _arun(self, content: str) -> str:
-        return self._run(content)
+        return await self._run(content)
 
 
 class NoveltyEvaluatorTool(BaseTool):
@@ -156,6 +162,8 @@ class NoveltyEvaluatorTool(BaseTool):
     description: str = """评估研究方案的新颖性和创新性。
 输入格式：研究方案内容
 输出：创新性评分、相似研究、创新点分析"""
+
+    llm:Optional[Any] = None  
     
     def __init__(self, llm=None):
         super().__init__()
@@ -190,4 +198,4 @@ class NoveltyEvaluatorTool(BaseTool):
             return f"创新性评估失败：{str(e)}"
     
     async def _arun(self, content: str) -> str:
-        return self._run(content)
+        return await self._run(content)

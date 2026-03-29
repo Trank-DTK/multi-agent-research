@@ -8,8 +8,8 @@ from .literature_agent import create_literature_agent
 from .experiment_agent import create_experiment_agent
 from .critic_agent import CriticService
 from .audit_middleware import AuditLogService
-from ..documents.services import VectorService
-from ..chat.models import Conversation, Message
+from documents.services import VectorService
+from chat.models import Conversation, Message
 
 orchestrator_instances = {}
 
@@ -25,7 +25,7 @@ class CollaborationWithReviewView(APIView):
         
         if not question:
             return JsonResponse({'error': '研究问题不能为空'}, status=400)
-        
+
         # 获取或创建对话
         if conversation_id:
             try:
@@ -70,30 +70,47 @@ class CollaborationWithReviewView(APIView):
                 del orchestrator_instances[key]
 
         try:
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                results = loop.run_until_complete(
-                    orchestrator.execute_research_task_with_feedback(question, conversation)
-                )
-            finally:
-                loop.close()
-            
+            results = orchestrator.execute_research_task_with_feedback(question, conversation)
+
+            # 检查结果是否有错误
+            if 'error' in results:
+                raise Exception(f"研究任务执行失败: {results['error'][:200]}")
+
             # 保存助手回复
             final_report = results.get('final_report', '')
             evaluation = results.get('evaluation', {})
-            
-            # 添加评审信息到回复
+
+            # 如果最终报告为空或太短，创建一个基本报告
+            if not final_report or len(final_report.strip()) < 50:
+                literature_review = results.get('literature_review', '无')
+                experiment_design = results.get('experiment_design', '无')
+                final_report = f"""# 研究方案报告
+
+## 研究问题
+{question}
+
+## 文献调研结果
+{literature_review[:500]}
+
+## 实验设计方案
+{experiment_design[:500]}
+"""
+
+            # 构建评审摘要
+            suggestions = evaluation.get('suggestions', [])
+            if not suggestions:
+                suggestions = ["暂无具体改进建议"]
+
             review_summary = f"""
 --- 评审报告 ---
 综合评分: {evaluation.get('overall_score', 'N/A')}/10
 是否通过: {'✅ 是' if evaluation.get('passed') else '❌ 否'}
 
 改进建议:
-{chr(10).join(['- ' + s for s in evaluation.get('suggestions', [])[:5]])}
+{chr(10).join(['- ' + str(s) for s in suggestions[:5]])}
 """
-            
+
+            # 组合完整响应
             full_response = final_report + "\n\n" + review_summary
             
             Message.objects.create(
@@ -131,7 +148,8 @@ class CollaborationWithReviewView(APIView):
             })
             
         except Exception as e:
-            import traceback
+            import traceback, sys
+            traceback.print_exc(file=sys.stdout)
             AuditLogService.log(
                 user=user,
                 action_type='error',
