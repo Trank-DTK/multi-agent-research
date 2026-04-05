@@ -15,6 +15,14 @@
         {{ loading ? '研究中...' : '开始研究（带评审）' }}
       </button>
     </div>
+
+    <!-- 工作流可视化 -->
+    <WorkflowVisualizer 
+      v-if="showWorkflow" 
+      :steps="workflowSteps" 
+      :show-dag="showDAG"
+      :dag-data="dagData"
+    />
     
     <!-- 评审结果卡片 -->
     <div v-if="evaluation" class="evaluation-card" :class="{ passed: evaluation.passed, failed: !evaluation.passed }">
