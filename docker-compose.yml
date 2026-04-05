@@ -20,6 +20,21 @@ services:
     networks:
       - research_network
 
+  redis:
+    image: redis:alpine
+    container_name: research_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - research_network
+
   web:
     build: .
     container_name: research_web
@@ -34,8 +49,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://agent_user:agent_password@db:5432/agent_db
+      REDIS_URL: redis://redis:6379/1
       SECRET_KEY: ${SECRET_KEY:-django-insecure-docker-dev-key}
       DEBUG: "True"
       ALLOWED_HOSTS: localhost,127.0.0.1,web
@@ -54,6 +72,7 @@ services:
 volumes:
   postgres_data:
   media_volume:
+  redis_data:
 
 
 networks:
