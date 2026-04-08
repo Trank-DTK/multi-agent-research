@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "chat",
     "documents",
     "pgvector",
+    "analysis",
 ]
 
 MIDDLEWARE = [
