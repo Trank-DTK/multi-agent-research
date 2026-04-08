@@ -165,3 +165,37 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173", # 前端开发服务器地址
     "http://127.0.0.1:5173",
 ]
+
+
+
+# 添加Redis配置
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://localhost:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
+            'CONNECTION_POOL_CLASS_KWARGS': {
+                'max_connections': 50,
+                'timeout': 20,
+            },
+            'MAX_CONNECTIONS': 1000,
+            'PICKLE_VERSION': -1,
+        },
+        'KEY_PREFIX': 'research_agent',
+        'TIMEOUT': 3600,  # 1小时默认超时
+    }
+}
+
+# 会话缓存
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+
+# 自定义缓存时间配置
+CACHE_TTL = {
+    'llm_response': 3600,      # LLM响应缓存1小时
+    'embedding': 86400,         # 向量缓存24小时
+    'search_result': 1800,      # 检索结果缓存30分钟
+}

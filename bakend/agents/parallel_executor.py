@@ -77,7 +77,7 @@ class AsyncParallelExecutor:
         results = []
         
         async def run_one(task):
-            async with self.semaphore:
+            async with self.semaphore:  #限制并发数量
                 try:
                     if asyncio.iscoroutinefunction(task["func"]):
                         result = await task["func"](*task.get("args", []), **task.get("kwargs", {}))
