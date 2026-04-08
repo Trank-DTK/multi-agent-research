@@ -29,4 +29,5 @@ urlpatterns = [
     path("api/", include("chat.urls")),
     path("api/",include("agents.urls")),
     path("api/",include("documents.urls")),
+    path("api/",include("analysis.urls")),
 ]
