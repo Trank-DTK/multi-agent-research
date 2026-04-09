@@ -10,13 +10,49 @@
     
     <main>
       <div class="welcome-card">
-        <h2>第2周开发中！ 🚀</h2>
-        <p>AI对话功能已集成，点击下方按钮开始体验</p>
-        <router-link to="/chat" class="chat-btn">开始对话</router-link>
-        <router-link to="/documents" class="nav-btn">📚 文献管理</router-link>
-        <router-link to="/literature" class="nav-btn">📖 文献助手</router-link>
-        <router-link to="/collaboration" class="nav-btn">🤝 协作研究</router-link>
-        <router-link to="/collaboration-review" class="nav-btn">智能评审协作</router-link>
+        <h2>第8周功能可用！ 🎉</h2>
+        <p>数据分析Agent已上线，支持CSV/Excel上传、统计分析、数据可视化</p>
+      </div>
+      
+      <div class="feature-grid">
+        <!-- 已有功能 -->
+        <router-link to="/chat" class="feature-card">
+          <div class="feature-icon">💬</div>
+          <h3>智能对话</h3>
+          <p>与AI助手自由对话</p>
+        </router-link>
+        
+        <router-link to="/documents" class="feature-card">
+          <div class="feature-icon">📚</div>
+          <h3>文献管理</h3>
+          <p>上传和管理PDF文献</p>
+        </router-link>
+        
+        <router-link to="/literature" class="feature-card">
+          <div class="feature-icon">📖</div>
+          <h3>文献助手</h3>
+          <p>基于文献的智能问答</p>
+        </router-link>
+        
+        <router-link to="/collaboration" class="feature-card">
+          <div class="feature-icon">🤝</div>
+          <h3>协作研究</h3>
+          <p>文献+实验双智能体协作</p>
+        </router-link>
+        
+        <router-link to="/collaboration-review" class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <h3>智能评审协作</h3>
+          <p>Critic评审官自动评估质量</p>
+        </router-link>
+        
+        <!-- 新增：数据分析入口 -->
+        <router-link to="/analysis" class="feature-card highlight">
+          <div class="feature-icon">📊</div>
+          <h3>数据分析</h3>
+          <p>上传CSV/Excel，统计分析、可视化</p>
+          <span class="new-badge">NEW</span>
+        </router-link>
       </div>
       
       <div class="stats">
@@ -26,7 +62,12 @@
           <p>用户认证 ✓</p>
           <p>Docker编排 ✓</p>
           <p>Ollama集成 ✓</p>
-          <p>LangChain入门 ✓</p>
+          <p>Agent开发 ✓</p>
+          <p>RAG系统 ✓</p>
+          <p>多智能体协作 ✓</p>
+          <p>Critic评审 ✓</p>
+          <p>任务调度优化 ✓</p>
+          <p>数据分析 ✓</p>
         </div>
       </div>
     </main>
@@ -39,9 +80,8 @@ import { useRouter } from 'vue-router'
 import axios from '../axios'
 
 const router = useRouter()
-const user = ref(null)   //初始值为null，表示尚未获取用户信息
+const user = ref(null)
 
-// 获取用户信息
 const fetchUserInfo = async () => {
   try {
     const response = await axios.get('/auth/user/')
@@ -51,14 +91,12 @@ const fetchUserInfo = async () => {
   }
 }
 
-// 退出登录
 const logout = () => {
   localStorage.removeItem('access')
   localStorage.removeItem('refresh')
   router.push('/login')
 }
 
-// 组件挂载时获取用户信息
 onMounted(() => {
   fetchUserInfo()
 })
@@ -117,6 +155,61 @@ main {
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.feature-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-decoration: none;
+  color: #333;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.feature-card.highlight {
+  border: 2px solid #9c27b0;
+  background: linear-gradient(135deg, #fff 0%, #f3e5f5 100%);
+}
+
+.feature-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.feature-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.feature-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.new-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background-color: #9c27b0;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -134,19 +227,4 @@ main {
   margin-top: 0;
   color: #42b983;
 }
-
-.chat-btn {
-  display: inline-block;
-  margin-top: 15px;
-  padding: 10px 20px;
-  background-color: #42b983;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-}
-
-.chat-btn:hover {
-  background-color: #3aa876;
-}
-
 </style>

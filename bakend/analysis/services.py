@@ -72,36 +72,39 @@ class DataAnalysisService:
     @staticmethod
     def correlation_analysis(df, columns=None):
         """相关性分析"""
-        if columns:
-            df = df[columns]
-        
-        # 只选择数值列
-        numeric_df = df.select_dtypes(include=[np.number])
-        
-        if numeric_df.empty:
-            return {'error': '没有数值列可用于相关性分析'}
-        
-        correlation = numeric_df.corr().to_dict()
-        
-        # 找出强相关对（r的绝对值>0.7）
-        strong_correlations = []
-        for i, col1 in enumerate(numeric_df.columns):
-            for j, col2 in enumerate(numeric_df.columns):
-                if i < j:
-                    corr_val = numeric_df[col1].corr(numeric_df[col2])
-                    if abs(corr_val) > 0.7:
-                        strong_correlations.append({
-                            'col1': col1,
-                            'col2': col2,
-                            'correlation': corr_val,
-                            'strength': '强正相关' if corr_val > 0 else '强负相关'
-                        })
-        
-        return {
-            'correlation_matrix': correlation,
-            'strong_correlations': strong_correlations,
-            'numeric_columns': list(numeric_df.columns)
-        }
+        try:
+            if columns:
+                df = df[columns]
+
+            # 只选择数值列
+            numeric_df = df.select_dtypes(include=[np.number])
+
+            if numeric_df.empty:
+                return {'error': '没有数值列可用于相关性分析'}
+
+            correlation = numeric_df.corr().to_dict()
+
+            # 找出强相关对（r的绝对值>0.7）
+            strong_correlations = []
+            for i, col1 in enumerate(numeric_df.columns):
+                for j, col2 in enumerate(numeric_df.columns):
+                    if i < j:
+                        corr_val = numeric_df[col1].corr(numeric_df[col2])
+                        if abs(corr_val) > 0.7:
+                            strong_correlations.append({
+                                'col1': col1,
+                                'col2': col2,
+                                'correlation': corr_val,
+                                'strength': '强正相关' if corr_val > 0 else '强负相关'
+                            })
+
+            return {
+                'correlation_matrix': correlation,
+                'strong_correlations': strong_correlations,
+                'numeric_columns': list(numeric_df.columns)
+            }
+        except Exception as e:
+            return {'error': f'相关性分析失败: {str(e)}'}
     
     @staticmethod
     def generate_insight(df, stats, correlation, llm=None):
@@ -129,7 +132,8 @@ class DataAnalysisService:
             try:
                 insight = llm.invoke(insight_prompt)
                 return insight
-            except:
+            except Exception as e:
+                print(f"LLM调用失败: {e}")
                 return DataAnalysisService._default_insight(stats, correlation)
         else:
             return DataAnalysisService._default_insight(stats, correlation)

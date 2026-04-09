@@ -132,7 +132,10 @@ class DataAnalysisView(APIView):
                 
             elif analysis_type == 'correlation':
                 result = DataAnalysisService.correlation_analysis(df, columns)
-                insight = DataAnalysisService.generate_insight(df, {}, result, llm)
+                if 'error' in result:
+                    return JsonResponse({'error': result['error']}, status=400)
+                stats = {'row_count': len(df), 'column_count': len(df.columns), 'statistics': {}}
+                insight = DataAnalysisService.generate_insight(df, stats, result, llm)
                 
             else:
                 return JsonResponse({'error': '不支持的分析类型'}, status=400)
