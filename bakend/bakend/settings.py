@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "documents",
     "pgvector",
     "analysis",
+    "writing"
 ]
 
 MIDDLEWARE = [
