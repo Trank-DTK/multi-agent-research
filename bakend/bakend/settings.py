@@ -155,6 +155,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.views.TokenObtainPairView': 'rest_framework.permissions.AllowAny',
         'rest_framework_simplejwt.views.TokenRefreshView': 'rest_framework.permissions.AllowAny',
     },
+    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }
 
 SIMPLE_JWT = {
