@@ -46,11 +46,17 @@
           <p>Critic评审官自动评估质量</p>
         </router-link>
         
-        <!-- 新增：数据分析入口 -->
         <router-link to="/analysis" class="feature-card highlight">
           <div class="feature-icon">📊</div>
           <h3>数据分析</h3>
           <p>上传CSV/Excel，统计分析、可视化</p>
+          <span class="new-badge">NEW</span>
+        </router-link>
+
+        <router-link to="/writing" class="feature-card highlight">
+          <div class="feature-icon">✍️</div>
+          <h3>论文写作</h3>
+          <p>AI辅助论文写作、大纲生成、润色、导出Word</p>
           <span class="new-badge">NEW</span>
         </router-link>
       </div>

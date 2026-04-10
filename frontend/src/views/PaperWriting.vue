@@ -130,7 +130,7 @@ const formatDate = (dateStr) => {
 
 const fetchPapers = async () => {
   try {
-    const res = await axios.get('/writing/papers/')
+    const res = await axios.get('/papers/')
     papers.value = res.data
   } catch (error) {
     console.error('获取论文列表失败', error)
@@ -142,7 +142,7 @@ const createPaper = async () => {
   
   creating.value = true
   try {
-    const res = await axios.post('/writing/papers/create/', {
+    const res = await axios.post('/papers/create/', {
       title: newPaperTitle.value,
       topic: newPaperTopic.value
     })
@@ -160,7 +160,7 @@ const createPaper = async () => {
 
 const selectPaper = async (paperId) => {
   try {
-    const res = await axios.get(`/writing/papers/${paperId}/`)
+    const res = await axios.get(`/papers/${paperId}/`)
     selectedPaper.value = res.data
     sections.value = res.data.sections || []
   } catch (error) {
@@ -173,7 +173,7 @@ const savePaper = async () => {
   
   saving.value = true
   try {
-    await axios.put(`/writing/papers/${selectedPaper.value.id}/`, {
+    await axios.put(`/papers/${selectedPaper.value.id}/`, {
       title: selectedPaper.value.title,
       abstract: selectedPaper.value.abstract,
       keywords: selectedPaper.value.keywords,
@@ -196,7 +196,7 @@ const addSection = async () => {
   if (!newSectionTitle.value || !selectedPaper.value) return
   
   try {
-    const res = await axios.post(`/writing/papers/${selectedPaper.value.id}/section/`, {
+    const res = await axios.post(`/papers/${selectedPaper.value.id}/section/`, {
       title: newSectionTitle.value,
       context: selectedPaper.value.abstract || ''
     })
@@ -215,7 +215,7 @@ const generateSection = async () => {
   if (!newSectionTitle.value || !selectedPaper.value) return
   
   try {
-    const res = await axios.post(`/writing/papers/${selectedPaper.value.id}/section/`, {
+    const res = await axios.post(`/papers/${selectedPaper.value.id}/section/`, {
       title: newSectionTitle.value,
       context: `研究主题：${selectedPaper.value.title}\n摘要：${selectedPaper.value.abstract || ''}`,
       word_count: 500
@@ -241,7 +241,7 @@ const generateAbstract = async () => {
   
   generatingAbstract.value = true
   try {
-    const res = await axios.post(`/writing/papers/${selectedPaper.value.id}/abstract/`, {
+    const res = await axios.post(`/papers/${selectedPaper.value.id}/abstract/`, {
       content: sections.value.map(s => s.content).join('\n')
     })
     selectedPaper.value.abstract = res.data.abstract
@@ -256,7 +256,7 @@ const generateAbstract = async () => {
 const polishSection = async (section) => {
   polishing.value = true
   try {
-    const res = await axios.post('/writing/polish/', {
+    const res = await axios.post('/polish/', {
       text: section.content,
       style: 'academic'
     })
@@ -271,12 +271,67 @@ const polishSection = async (section) => {
 
 const exportDocx = async () => {
   if (!selectedPaper.value) return
-  
+
   exporting.value = true
   try {
-    window.open(`/api/writing/papers/${selectedPaper.value.id}/export/`, '_blank')
+    // 使用axios下载文件，以便处理错误
+    const response = await axios.get(`/papers/${selectedPaper.value.id}/export/`, {
+      responseType: 'blob'
+    })
+
+    // 检查响应状态
+    if (response.status === 200) {
+      // 创建下载链接
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+
+      // 从Content-Disposition头获取文件名，或使用默认文件名
+      let filename = `${selectedPaper.value.title}.docx`
+      const contentDisposition = response.headers['content-disposition']
+      if (contentDisposition) {
+        const matches = /filename="?(.+?)"?$/i.exec(contentDisposition)
+        if (matches && matches[1]) {
+          filename = matches[1]
+        }
+      }
+
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } else {
+      // 尝试解析错误消息
+      const text = await response.data.text()
+      let errorMsg = '导出失败'
+      try {
+        const errorJson = JSON.parse(text)
+        errorMsg = errorJson.error || errorMsg
+      } catch {
+        errorMsg = text || errorMsg
+      }
+      alert(`导出失败: ${errorMsg}`)
+    }
   } catch (error) {
     console.error('导出失败', error)
+    if (error.response) {
+      // 服务器返回了错误状态码
+      let errorMsg = '导出失败'
+      try {
+        const errorData = error.response.data
+        if (typeof errorData === 'object' && errorData.error) {
+          errorMsg = errorData.error
+        } else if (typeof errorData === 'string') {
+          errorMsg = errorData
+        }
+      } catch {
+        // 忽略解析错误
+      }
+      alert(`导出失败: ${errorMsg}`)
+    } else {
+      alert('导出失败：网络错误或服务器无响应')
+    }
   } finally {
     exporting.value = false
   }
@@ -286,7 +341,7 @@ const deletePaper = async (paperId) => {
   if (!confirm('确定删除这篇论文吗？')) return
   
   try {
-    await axios.delete(`/writing/papers/${paperId}/delete/`)
+    await axios.delete(`/papers/${paperId}/delete/`)
     await fetchPapers()
     if (selectedPaper.value?.id === paperId) {
       selectedPaper.value = null
@@ -306,7 +361,7 @@ const sendChat = async () => {
   chatLoading.value = true
   
   try {
-    const res = await axios.post('/writing/agent/', { message: userMsg })
+    const res = await axios.post('/agent/', { message: userMsg })
     chatMessages.value.push({ role: 'assistant', content: res.data.response })
   } catch (error) {
     chatMessages.value.push({ role: 'assistant', content: '抱歉，处理失败' })
