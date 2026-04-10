@@ -156,6 +156,19 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.views.TokenRefreshView': 'rest_framework.permissions.AllowAny',
     },
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
+    # 配置限流
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',  #匿名用户
+        'rest_framework.throttling.UserRateThrottle',  #登录用户
+        'core.throttling.BurstRateThrottle',
+        'core.throttling.SustainedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day',
+        'burst': '10/min',
+        'sustained': '100/hour',
+    },
 }
 
 SIMPLE_JWT = {
@@ -201,4 +214,49 @@ CACHE_TTL = {
     'llm_response': 3600,      # LLM响应缓存1小时
     'embedding': 86400,         # 向量缓存24小时
     'search_result': 1800,      # 检索结果缓存30分钟
+}
+
+# 日志配置
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/app.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'agents': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
 }

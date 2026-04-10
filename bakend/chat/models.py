@@ -42,6 +42,16 @@ class Message(models.Model):
         ordering = ['created_at']  #默认按发送时间升序排列
         verbose_name = "消息"
         verbose_name_plural = "消息"
+        indexes = [
+            # 索引1：按对话ID查询消息
+            models.Index(fields=['conversation'], name='idx_message_conversation'),
+            
+            # 索引2：按对话+角色查询
+            models.Index(fields=['conversation', 'role'], name='idx_message_conversation_role'),
+            
+            # 索引3：按创建时间排序
+            models.Index(fields=['-created_at'], name='idx_message_created_at'),
+        ]
 
     def __str__(self):
         return f"{self.get_role_display()}: {self.content[:30]}..."  #显示角色和消息内容的前30个字符

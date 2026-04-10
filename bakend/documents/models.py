@@ -42,6 +42,13 @@ class DocumentChunk(models.Model):
         unique_together = ['document', 'chunk_index']
         verbose_name = '文档分块'
         verbose_name_plural = '文档分块'
+        indexes = [
+            # 索引1：按文档ID查询所有分块
+            models.Index(fields=['document'], name='idx_chunk_document'),
+            
+            # 索引2：按文档+序号查询（用于重建文本）
+            models.Index(fields=['document', 'chunk_index'], name='idx_chunk_document_index'),
+        ]
     
     def __str__(self):
         return f"{self.document.title} - 块{self.chunk_index}"

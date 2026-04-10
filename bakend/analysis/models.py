@@ -19,6 +19,13 @@ class Dataset(models.Model):
         ordering = ['-uploaded_at']
         verbose_name = '数据集'
         verbose_name_plural = '数据集'
+        indexes = [
+            # 索引1：按用户查询数据集
+            models.Index(fields=['user'], name='idx_dataset_user'),
+            
+            # 索引2：按用户+上传时间查询
+            models.Index(fields=['user', '-uploaded_at'], name='idx_dataset_user_uploaded'),
+        ]
     
     def __str__(self):
         return self.name
@@ -41,6 +48,10 @@ class AnalysisResult(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            # 索引：按数据集+分析类型查询
+            models.Index(fields=['dataset', 'analysis_type'], name='idx_result_dataset_type'),
+        ]
 
 
 class DataVisualization(models.Model):

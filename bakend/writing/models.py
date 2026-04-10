@@ -22,6 +22,16 @@ class Paper(models.Model):
     
     class Meta:
         ordering = ['-updated_at']
+        indexes = [
+            # 索引1：按用户查询论文
+            models.Index(fields=['user'], name='idx_paper_user'),
+            
+            # 索引2：按用户+更新时间（列表页排序）
+            models.Index(fields=['user', '-updated_at'], name='idx_paper_user_updated'),
+            
+            # 索引3：按用户+状态（筛选草稿/已完成）
+            models.Index(fields=['user', 'status'], name='idx_paper_user_status'),
+        ]
     
     def __str__(self):
         return self.title
@@ -48,6 +58,10 @@ class PaperSection(models.Model):
     
     class Meta:
         ordering = ['order']
+        indexes = [
+            # 索引：按论文+顺序查询章节
+            models.Index(fields=['paper', 'order'], name='idx_section_paper_order'),
+        ]
 
 
 class Citation(models.Model):
