@@ -1,6 +1,7 @@
 # 论文写作助手视图
 import json
 from django.http import JsonResponse, HttpResponse
+from django.utils.encoding import smart_str
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -253,11 +254,22 @@ class ExportDocxView(APIView):
                 buffer.getvalue(),
                 content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             )
-            response['Content-Disposition'] = f'attachment; filename="{paper.title}.docx"'
+            # 正确处理中文文件名
+            filename = smart_str(paper.title)
+            # 移除文件名中的非法字符
+            import re
+            filename = re.sub(r'[<>:"/\\|?*]', '', filename)
+            # 添加文件扩展名
+            filename = f'{filename}.docx'
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
-            
+
         except Paper.DoesNotExist:
             return JsonResponse({'error': '论文不存在'}, status=404)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'error': f'导出失败: {str(e)}'}, status=500)
 
 
 class WritingAgentChatView(APIView):

@@ -31,7 +31,7 @@ def create_writing_agent(verbose=True):
     agent = initialize_agent(
         tools=tools,
         llm=llm,
-        agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION,
+        agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         memory=memory,
         verbose=verbose,
         handle_parsing_errors=True
@@ -42,9 +42,16 @@ def create_writing_agent(verbose=True):
 
 class WritingService:
     """论文写作服务"""
-    
+
     def __init__(self):
         self.agent = create_writing_agent(verbose=False)
+        # 创建独立的工具实例，避免agent路由错误
+        self.llm = Ollama(
+            model="qwen2.5:7b",
+            base_url=get_ollama_base_url(),
+            temperature=0.5
+        )
+        self.polish_tool = PolishTextTool(llm=self.llm)
     
     def generate_outline(self, topic: str, paper_type: str = "research") -> str:
         """生成论文大纲"""
@@ -59,7 +66,9 @@ class WritingService:
     
     def polish_text(self, text: str, style: str = "academic") -> str:
         """润色文本"""
-        return self.agent.run(f"使用polish_text工具润色以下文本：\n{text}\n风格：{style}")
+        # 直接调用润色工具，避免agent路由错误
+        query = f"文本:{text} 风格:{style}"
+        return self.polish_tool._run(query)
     
     def generate_abstract(self, content: str, word_limit: int = 300) -> str:
         """生成摘要"""
