@@ -30,4 +30,5 @@ urlpatterns = [
     path("api/",include("agents.urls")),
     path("api/",include("documents.urls")),
     path("api/",include("analysis.urls")),
+    path("api/",include("writing.urls")),
 ]
