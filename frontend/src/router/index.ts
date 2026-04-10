@@ -9,6 +9,7 @@ import LiteratureChat from '@/views/LiteratureChat.vue'
 import Collaboration from '@/views/Collaboration.vue'
 import CollaborationWithReview from '@/views/CollaborationWithReview.vue'
 import DataAnalysis from '@/views/DataAnalysis.vue'
+import PaperWriting from '@/views/PaperWriting.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -75,6 +76,12 @@ const router = createRouter({
       path: '/analysis',
       name: 'analysis',
       component: DataAnalysis,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/writing',
+      name: 'writing',
+      component: PaperWriting,
       meta: { requiresAuth: true }
     },
 
