@@ -7,7 +7,7 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 import App from './App.vue'
 import router from './router'
-import './utils/axios'
+import './axios'
 import './styles/theme.css'
 import { useThemeStore } from './stores/theme'
 
