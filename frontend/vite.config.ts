@@ -1,48 +1,75 @@
 import { fileURLToPath, URL } from 'node:url'
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueJsx from '@vitejs/plugin-vue-jsx'
-import vueDevTools from 'vite-plugin-vue-devtools'
+import { VitePWA } from 'vite-plugin-pwa'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
-    vueJsx(),
-    vueDevTools(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      manifest: {
+        name: '多智能体科研协作平台',
+        short_name: '科研助手',
+        description: 'AI驱动的科研协作平台',
+        theme_color: '#42b983',
+        background_color: '#ffffff',
+        display: 'standalone',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
+        ]
+      },
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/api\..*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60
+              }
+            }
+          }
+        ]
+      }
+    })
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
+    }
   },
   server: {
+    port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        secure: false,
-        ws: true,
-        //日志
-        configure: (proxy, options) => {
-          //代理出错
-          proxy.on('error', (err, req, res) => {
-            console.log('Proxy error:', err);
-          });
-          //请求转发时出错
-          proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log(`[PROXY] ${req.method} ${req.url} -> ${options.target}`);
-          });
-          //收到响应时出错
-          proxy.on('proxyRes', (proxyRes, req, res) => {
-            console.log(`[PROXY] ${req.method} ${req.url} <- ${proxyRes.statusCode}`);
-          });
-        },
-      },
-    },
-    host: '0.0.0.0',   // 监听所有接口
-    port: 5173,
-    strictPort: false,   //如果端口被占用，自动寻找下一个可用端口
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true
+      }
+    }
   }
 })
