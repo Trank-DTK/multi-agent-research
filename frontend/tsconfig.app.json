@@ -6,6 +6,9 @@
     // Extra safety for array and object lookups, but may have false positives.
     "noUncheckedIndexedAccess": true,
 
+    // Allow JavaScript files to be imported
+    "allowJs": true,
+
     // Path mapping for cleaner imports.
     "paths": {
       "@/*": ["./src/*"]
