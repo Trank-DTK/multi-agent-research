@@ -1,9 +1,14 @@
 import axios from 'axios'
-import router from './router'
+import router from '/router'
+import { errorHandler } from './utils/errorHandler'
 
-// 创建 axios 实例，设置 baseURL
+// 创建axios实例
 const instance = axios.create({
-  baseURL: '/api'  // 所有请求都会自动加上 /api 前缀
+  baseURL: '/api',
+  timeout: 30000,  // 30秒超时
+  headers: {
+    'Content-Type': 'application/json'
+  }
 })
 
 // 请求拦截器
@@ -13,31 +18,53 @@ instance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // 添加请求开始时间（用于性能监控）
+    config.metadata = { startTime: Date.now() }
+
     return config
   },
-  error => Promise.reject(error)
+  error => {
+    return Promise.reject(error)
+  }
 )
 
 // 响应拦截器
 instance.interceptors.response.use(
-  response => response,
+  response => {
+    // 记录请求耗时
+    const duration = Date.now() - response.config.metadata?.startTime
+    if (duration > 3000) {
+      console.warn(`慢请求: ${response.config.url} - ${duration}ms`)
+    }
+
+    return response
+  },
   async error => {
     const originalRequest = error.config
+
+    // 处理401 token过期
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
+
       try {
         const refresh = localStorage.getItem('refresh')
-        // 刷新 token 的请求也要用 instance
-        const res = await instance.post('/auth/refresh/', { refresh })
+        const res = await axios.post('/api/auth/refresh/', { refresh })
         localStorage.setItem('access', res.data.access)
-        // 更新原始请求的 Authorization 头
+
         originalRequest.headers.Authorization = `Bearer ${res.data.access}`
         return instance(originalRequest)
       } catch (refreshError) {
+        localStorage.removeItem('access')
+        localStorage.removeItem('refresh')
         router.push('/login')
         return Promise.reject(refreshError)
       }
     }
+
+    // 统一错误处理
+    errorHandler.handleAPIError(error, originalRequest?.url)
+
     return Promise.reject(error)
   }
 )
