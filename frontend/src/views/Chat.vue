@@ -7,6 +7,30 @@
 
 <script setup>
 import ChatInterface from '@/components/ChatInterface.vue'
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
+
+// 添加快捷键
+useKeyboardShortcuts([
+  {
+    key: 'enter',
+    ctrl: true,
+    handler: () => {
+      sendMessage()
+    }
+  },
+  {
+    key: 'escape',
+    handler: () => {
+      inputMessage.value = ''
+    }
+  },
+  {
+    key: '/',
+    handler: () => {
+      document.querySelector('textarea')?.focus()
+    }
+  }
+])
 </script>
 
 <style scoped>
