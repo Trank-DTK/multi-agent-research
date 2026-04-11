@@ -10,6 +10,7 @@ BASE_URL = "http://localhost:8000/api"
 TEST_USER = {
     "username": "testuser",
     "password": "testpass123",
+    "password2": "testpass123",
     "email": "test@example.com"
 }
 
