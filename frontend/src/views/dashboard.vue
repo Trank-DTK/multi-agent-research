@@ -47,7 +47,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useResponsive } from '@/composables/useResponsive'
+import { useResponsive } from '@/composables/useResponsive.js'
 import ResponsiveNav from '@/components/ResponsiveNav.vue'
 
 const { isMobile } = useResponsive()

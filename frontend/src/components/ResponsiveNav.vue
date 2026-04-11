@@ -33,7 +33,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useResponsive } from '@/composables/useResponsive'
+import { useResponsive } from '@/composables/useResponsive.js'
 import ThemeToggle from './ThemeToggle.vue'
 
 const router = useRouter()
