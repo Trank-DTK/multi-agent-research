@@ -1,5 +1,5 @@
 import axios from 'axios'
-import router from '/router'
+import router from '@/router'
 import { errorHandler } from './utils/errorHandler'
 
 // 创建axios实例
