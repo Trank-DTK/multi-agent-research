@@ -46,8 +46,8 @@ def cache_result(timeout=3600):
                 model="cache",
                 prompt=cache_key,
                 temperature=0,
-                response=str(result)[:5000], #限制缓存大小
-                ttl=timeout  #过期时间
+                response=str(result)[:5000], # 限制缓存大小
+                ttl=timeout  # 过期时间
             )
             
             return result
