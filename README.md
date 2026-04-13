@@ -169,3 +169,38 @@ multi_agent_research/
 ├── .env.production             # 生产环境变量
 └── README.md                   # 项目说明
 ```
+
+
+## 开发指南
+
+### 后端开发
+```bash
+cd bakend
+conda create -n multi_agent python=3.11
+conda activate multi_agent
+pip install -r requirements.txt
+python manage.py runserver
+```
+
+### 前端开发
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+
+## API文档
+
+详细的 API 文档请查看：[API文档](docs/API.md)
+
+
+## 贡献指南
+
+欢迎提交Issue和Pull Request
+
+
+## 许可证
+
+MIT License
+
