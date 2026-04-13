@@ -86,6 +86,7 @@ docker-compose up db redis
 
 
 ## 项目结构
+```bash
 multi_agent_research/
 ├── bakend/                     # Django后端
 │   ├── accounts/               # 用户认证模块
@@ -167,3 +168,4 @@ multi_agent_research/
 │   └── soft_copyright/         # 软著材料
 ├── .env.production             # 生产环境变量
 └── README.md                   # 项目说明
+```
