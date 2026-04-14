@@ -1,9 +1,21 @@
 <!-- 论文写作页面 -->
 <template>
   <div class="paper-writing-page">
-    <div class="header">
-      <h2>✍️ 论文写作</h2>
-      <button @click="showNewPaper = true" class="new-btn">+ 新建论文</button>
+    <div class="page-header">
+      <button class="back-btn" @click="$router.push('/dashboard')">
+        <span class="btn-icon">←</span>
+        <span class="btn-text">返回主页</span>
+      </button>
+      <div class="header-content">
+        <div class="header-title">
+          <h1>✍️ 论文写作</h1>
+          <p class="subtitle">AI辅助的论文撰写、编辑和导出工具</p>
+        </div>
+        <button @click="showNewPaper = true" class="new-btn">
+          <span class="btn-icon">+</span>
+          <span class="btn-text">新建论文</span>
+        </button>
+      </div>
     </div>
     
     <!-- 新建论文弹窗 -->
@@ -377,25 +389,100 @@ onMounted(() => {
 
 <style scoped>
 .paper-writing-page {
-  max-width: 1400px;
-  margin: 20px auto;
-  padding: 0 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 40px 24px;
 }
 
-.header {
+.page-header {
+  position: relative;
+  margin-bottom: 40px;
+}
+
+.back-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.back-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--success-color);
+  transform: translateX(-4px);
+}
+
+.btn-icon {
+  font-size: 16px;
+}
+
+.header-content {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-left: 120px; /* 为返回按钮留出空间 */
+}
+
+.header-title h1 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--success-color) 0%, #36a1ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.6;
 }
 
 .new-btn {
-  padding: 10px 20px;
-  background-color: #42b983;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--success-color) 0%, #36a1ff 100%);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 12px;
   cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+}
+
+.new-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.3);
+}
+
+.btn-icon {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.btn-text {
+  font-size: 14px;
 }
 
 .main-layout {
@@ -426,11 +513,11 @@ onMounted(() => {
 }
 
 .paper-item:hover {
-  border-color: #42b983;
+  border-color: #1890ff;
 }
 
 .paper-item.active {
-  border-color: #42b983;
+  border-color: #1890ff;
   background-color: #e8f5e9;
 }
 
@@ -488,13 +575,13 @@ onMounted(() => {
 
 .title-input:focus {
   outline: none;
-  border-bottom: 1px solid #42b983;
+  border-bottom: 1px solid #1890ff;
 }
 
 .actions button {
   padding: 6px 12px;
   margin-left: 10px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -585,7 +672,7 @@ onMounted(() => {
 
 .add-section button {
   padding: 8px 16px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -618,7 +705,7 @@ onMounted(() => {
 }
 
 .message.user {
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   text-align: right;
 }
@@ -642,7 +729,7 @@ onMounted(() => {
 
 .chat-input button {
   padding: 10px 20px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;

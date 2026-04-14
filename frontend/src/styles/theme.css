@@ -9,9 +9,9 @@
   --text-tertiary: #999999;
   --border-color: #e0e0e0;
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --header-bg: #42b983;
+  --header-bg: #1890ff;
   --header-text: #ffffff;
-  --success-color: #42b983;
+  --success-color: #1890ff;
   --warning-color: #ff9800;
   --error-color: #f44336;
   --info-color: #2196f3;
@@ -27,7 +27,7 @@
   --text-tertiary: #808080;
   --border-color: #404040;
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --header-bg: #2d5a3b;
+  --header-bg: #1a3a5f;
   --header-text: #e0e0e0;
 }
 

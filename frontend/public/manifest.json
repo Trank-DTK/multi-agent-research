@@ -4,7 +4,7 @@
   "description": "AI驱动的多智能体科研协作平台",
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#42b983",
+  "theme_color": "#1890ff",
   "background_color": "#ffffff",
   "icons": [
     {

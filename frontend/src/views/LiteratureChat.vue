@@ -2,8 +2,14 @@
 <template>
   <div class="literature-chat">
     <div class="chat-header">
-      <h2>📖 文献助手</h2>
-      <p>我可以帮你在已上传的文献中检索信息、总结内容</p>
+      <button class="back-btn" @click="$router.push('/dashboard')">
+        <span class="btn-icon">←</span>
+        <span class="btn-text">返回主页</span>
+      </button>
+      <div class="header-content">
+        <h2>📖 文献助手</h2>
+        <p>我可以帮你在已上传的文献中检索信息、总结内容</p>
+      </div>
       <button @click="resetChat" class="reset-btn">重置对话</button>
     </div>
     
@@ -117,10 +123,40 @@ onMounted(() => {
 
 .chat-header {
   padding: 15px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   text-align: center;
   position: relative;
+}
+
+.back-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 5px 12px;
+  background-color: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid white;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background-color: rgba(255,255,255,0.3);
+  transform: translateX(-2px);
+}
+
+.btn-icon {
+  font-size: 12px;
+}
+
+.header-content {
+  padding: 0 100px; /* 为左右按钮留出空间 */
 }
 
 .chat-header h2 {
@@ -162,7 +198,7 @@ onMounted(() => {
 }
 
 .message.user .content {
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
 }
 
@@ -216,7 +252,7 @@ textarea {
 
 button {
   padding: 0 20px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;

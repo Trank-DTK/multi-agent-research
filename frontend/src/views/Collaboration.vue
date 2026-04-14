@@ -1,8 +1,14 @@
 <template>
   <div class="collaboration-page">
-    <div class="header">
-      <h2>🤝 多智能体协作研究</h2>
-      <p>文献助手 + 实验助手 协同工作，完成完整的研究流程</p>
+    <div class="page-header">
+      <button class="back-btn" @click="$router.push('/dashboard')">
+        <span class="btn-icon">←</span>
+        <span class="btn-text">返回主页</span>
+      </button>
+      <div class="header-content">
+        <h2>🤝 多智能体协作研究</h2>
+        <p>文献助手 + 实验助手 协同工作，完成完整的研究流程</p>
+      </div>
     </div>
     
     <div class="input-section">
@@ -168,13 +174,46 @@ const startResearch = async () => {
   padding: 0 20px;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 30px;
+.page-header {
+  position: relative;
+  margin-bottom: 40px;
 }
 
-.header h2 {
-  color: #42b983;
+.back-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.back-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--success-color);
+  transform: translateX(-4px);
+}
+
+.btn-icon {
+  font-size: 16px;
+}
+
+.header-content {
+  text-align: center;
+}
+
+.header-content h2 {
+  color: #1890ff;
   margin-bottom: 10px;
 }
 
@@ -195,7 +234,7 @@ textarea {
 
 button {
   padding: 12px 30px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -231,8 +270,8 @@ button:disabled {
 }
 
 .result-tabs button.active {
-  color: #42b983;
-  border-bottom: 2px solid #42b983;
+  color: #1890ff;
+  border-bottom: 2px solid #1890ff;
   background-color: white;
 }
 
@@ -260,7 +299,7 @@ button:disabled {
   width: 40px;
   height: 40px;
   border: 3px solid #f3f3f3;
-  border-top: 3px solid #42b983;
+  border-top: 3px solid #1890ff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 20px;
@@ -292,7 +331,7 @@ button:disabled {
 }
 
 .dot.literature {
-  background-color: #42b983;
+  background-color: #1890ff;
 }
 
 .dot.experiment {

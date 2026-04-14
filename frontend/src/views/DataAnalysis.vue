@@ -1,8 +1,14 @@
 <!-- 数据集管理页面 -->
 <template>
   <div class="data-analysis-page">
-    <div class="header">
-      <h2>数据分析</h2>
+    <div class="page-header">
+      <button class="back-btn" @click="$router.push('/dashboard')">
+        <span class="btn-icon">←</span>
+        <span class="btn-text">返回主页</span>
+      </button>
+      <div class="header-content">
+        <h2>数据分析</h2>
+      </div>
       <button @click="showUpload = true" class="upload-btn">+ 上传数据</button>
     </div>
     
@@ -380,16 +386,51 @@ onMounted(() => {
   padding: 0 20px;
 }
 
-.header {
+.page-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
+}
+
+.back-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.back-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--success-color);
+  transform: translateX(-4px);
+}
+
+.btn-icon {
+  font-size: 16px;
+}
+
+.header-content {
+  flex: 1;
+  text-align: center;
 }
 
 .upload-btn {
   padding: 10px 20px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -412,7 +453,7 @@ onMounted(() => {
 }
 
 .dataset-card:hover {
-  border-color: #42b983;
+  border-color: #1890ff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
@@ -488,7 +529,7 @@ onMounted(() => {
 .stat-value {
   font-size: 24px;
   font-weight: bold;
-  color: #42b983;
+  color: #1890ff;
 }
 
 .analysis-actions {
@@ -499,7 +540,7 @@ onMounted(() => {
 
 .analysis-actions button {
   padding: 8px 16px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -537,7 +578,7 @@ onMounted(() => {
 }
 
 .viz-controls button {
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   cursor: pointer;
@@ -568,7 +609,7 @@ onMounted(() => {
 }
 
 .message.user {
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   text-align: right;
 }
@@ -594,7 +635,7 @@ onMounted(() => {
 
 .chat-input button {
   padding: 8px 16px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;

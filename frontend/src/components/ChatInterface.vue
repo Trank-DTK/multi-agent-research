@@ -239,7 +239,7 @@ onMounted(() => {
 
 .new-chat-btn {
   padding: 5px 10px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -271,7 +271,7 @@ onMounted(() => {
 
 .conversation-item.active {
   background-color: #e8f5e9;
-  border-color: #42b983;
+  border-color: #1890ff;
 }
 
 .conv-title {
@@ -325,7 +325,7 @@ onMounted(() => {
   left: 10px;
   z-index: 10;
   padding: 5px 10px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -348,7 +348,7 @@ onMounted(() => {
 }
 
 .message.user .content {
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   margin-left: 10px;
 }
@@ -397,7 +397,7 @@ textarea {
 
 button {
   padding: 0 20px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;

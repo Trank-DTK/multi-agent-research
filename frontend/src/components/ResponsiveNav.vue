@@ -21,7 +21,13 @@
       <router-link to="/collaboration" @click="closeMenu">协作研究</router-link>
       <router-link to="/analysis" @click="closeMenu">数据分析</router-link>
       <router-link to="/writing" @click="closeMenu">论文写作</router-link>
-      
+
+      <!-- 搜索框 -->
+      <div class="nav-search" v-show="!isMobile">
+        <input type="text" placeholder="搜索..." class="search-input" v-model="searchQuery" @keyup.enter="performSearch">
+        <button class="search-btn" @click="performSearch">🔍</button>
+      </div>
+
       <div class="nav-actions">
         <ThemeToggle />
         <button @click="logout" class="logout-btn">退出</button>
@@ -48,6 +54,16 @@ const closeMenu = () => {
   menuOpen.value = false
 }
 
+const searchQuery = ref('')
+
+const performSearch = () => {
+  if (searchQuery.value.trim()) {
+    // 这里可以跳转到搜索结果页面，暂时先清空输入框
+    console.log('搜索:', searchQuery.value)
+    searchQuery.value = ''
+  }
+}
+
 const logout = () => {
   localStorage.removeItem('access')
   localStorage.removeItem('refresh')
@@ -57,16 +73,19 @@ const logout = () => {
 
 <style scoped>
 .responsive-nav {
-  background-color: var(--header-bg);
+  background: linear-gradient(135deg, var(--header-bg) 0%, #1a6fd3 100%);
   color: var(--header-text);
-  padding: 0 20px;
+  padding: 0 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 60px;
+  height: 64px;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-brand a {
@@ -100,17 +119,57 @@ const logout = () => {
 .nav-links a {
   text-decoration: none;
   color: inherit;
-  padding: 8px 12px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.3px;
 }
 
 .nav-links a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .nav-links a.router-link-active {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.25);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.nav-search {
+  display: flex;
+  align-items: center;
+  margin: 0 20px;
+}
+
+.search-input {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  width: 200px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  width: 250px;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.search-btn {
+  background: none;
+  border: none;
+  color: white;
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
 }
 
 .nav-actions {

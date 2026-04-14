@@ -72,7 +72,7 @@ const drawDAG = () => {
     const y = 50 + Math.floor(idx / 3) * 80
     positions[node.id] = { x, y }
     
-    ctx.fillStyle = node.status === 'completed' ? '#42b983' : 
+    ctx.fillStyle = node.status === 'completed' ? '#1890ff' : 
                     node.status === 'running' ? '#ff9800' : 
                     node.status === 'failed' ? '#f44336' : '#e0e0e0'
     ctx.beginPath()
@@ -159,7 +159,7 @@ h3, h4 {
 }
 
 .step.completed .step-number {
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
 }
 
@@ -213,7 +213,7 @@ h3, h4 {
 }
 
 .step-check {
-  color: #42b983;
+  color: #1890ff;
 }
 
 .step-error {

@@ -1,9 +1,19 @@
 <!-- 文献管理页面 -->
 <template>
   <div class="documents-page">
-    <div class="header">
-      <h2>📚 文献库管理</h2>
-      <button @click="showUpload = true" class="upload-btn">+ 上传文献</button>
+    <div class="page-header">
+      <button class="back-btn" @click="$router.push('/dashboard')">
+        <span class="btn-icon">←</span>
+        <span class="btn-text">返回主页</span>
+      </button>
+      <div class="header-content">
+        <h1>📚 文献库管理</h1>
+        <p class="subtitle">管理您的科研文献，支持PDF上传和分析</p>
+        <button @click="showUpload = true" class="upload-btn">
+          <span class="btn-icon">+</span>
+          <span class="btn-text">上传文献</span>
+        </button>
+      </div>
     </div>
     
     <!-- 上传弹窗 -->
@@ -142,7 +152,7 @@ onMounted(() => {
 
 .upload-btn {
   padding: 10px 20px;
-  background-color: #42b983;
+  background-color: #1890ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -231,7 +241,7 @@ onMounted(() => {
 }
 
 .success {
-  color: #42b983;
+  color: #1890ff;
   margin-top: 10px;
 }
 </style>

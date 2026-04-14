@@ -6,7 +6,7 @@ export const useThemeStore = defineStore('theme', {
     isDark: localStorage.getItem('theme') === 'dark' ||
       (window.matchMedia('(prefers-color-scheme: dark)').matches &&
         !localStorage.getItem('theme')),
-    primaryColor: localStorage.getItem('primaryColor') || '#42b983',
+    primaryColor: localStorage.getItem('primaryColor') || '#1890ff',
   }),
 
   actions: {

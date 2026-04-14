@@ -13,7 +13,7 @@ export default defineConfig({
         name: '多智能体科研协作平台',
         short_name: '科研助手',
         description: 'AI驱动的科研协作平台',
-        theme_color: '#42b983',
+        theme_color: '#1890ff',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [
