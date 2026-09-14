@@ -32,7 +32,7 @@ services:
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
-             gunicorn bakend.wsgi:application --bind 0.0.0.0:8000 --workers 4"
+             gunicorn bakend.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 600"
     volumes:
       - static_volume:/app/static
       - media_volume:/app/media
@@ -40,6 +40,7 @@ services:
       DATABASE_URL: postgres://agent_user:${DB_PASSWORD}@db:5432/agent_db
       REDIS_URL: redis://redis:6379/1
       SECRET_KEY: ${SECRET_KEY}
+      MODEL_KEY_SECRET: ${MODEL_KEY_SECRET:-${SECRET_KEY}}
       DEBUG: "False"
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
       OLLAMA_BASE_URL: http://host.docker.internal:11434

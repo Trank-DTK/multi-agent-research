@@ -8,88 +8,95 @@ const Dashboard = () => import('@/views/dashboard.vue')
 const Chat = () => import('@/views/Chat.vue')
 const AgentChat = () => import('@/views/AgentChat.vue')
 const Documents = () => import('@/views/Documents.vue')
-const LiteratureChat = () => import('@/views/LiteratureChat.vue')
+
 const Collaboration = () => import('@/views/Collaboration.vue')
-const CollaborationWithReview = () => import('@/views/CollaborationWithReview.vue')
+
 const DataAnalysis = () => import('@/views/DataAnalysis.vue')
 const PaperWriting = () => import('@/views/PaperWriting.vue')
 
 const routes = [
   {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/views/Settings.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/login',
     name: 'login',
     component: Login,
-    meta: { requiresGuest: true }
+    meta: { requiresGuest: true },
   },
   {
     path: '/register',
     name: 'register',
     component: Register,
-    meta: { requiresGuest: true }
+    meta: { requiresGuest: true },
   },
   {
     path: '/dashboard',
     name: 'dashboard',
     component: Dashboard,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/chat',
     name: 'chat',
     component: Chat,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/agent',
     name: 'agent',
     component: AgentChat,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/documents',
     name: 'documents',
     component: Documents,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/literature',
     name: 'literature',
-    component: LiteratureChat,
-    meta: { requiresAuth: true }
+    redirect: '/documents',
+    meta: { requiresAuth: true },
   },
   {
     path: '/collaboration',
     name: 'collaboration',
     component: Collaboration,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/collaboration-review',
     name: 'collaboration-review',
-    component: CollaborationWithReview,
-    meta: { requiresAuth: true }
+    redirect: { path: '/collaboration', query: { review: '1' } },
+    meta: { requiresAuth: true },
   },
   {
     path: '/analysis',
     name: 'analysis',
     component: DataAnalysis,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/writing',
     name: 'writing',
     component: PaperWriting,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
+  { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
   {
     path: '/',
-    redirect: '/login'
-  }
+    redirect: '/login',
+  },
 ]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
 })
 
 // 路由守卫
@@ -103,8 +110,7 @@ router.beforeEach((to, from, next) => {
   // 已登录用户不能访问登录/注册页
   else if (to.meta.requiresGuest && isAuthenticated) {
     next('/dashboard')
-  }
-  else {
+  } else {
     next()
   }
 })

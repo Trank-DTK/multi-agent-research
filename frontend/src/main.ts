@@ -9,6 +9,7 @@ import App from './App.vue'
 import router from './router'
 import './axios'
 import './styles/theme.css'
+import './styles/workspace.css'
 import { useThemeStore } from './stores/theme'
 
 const pinia = createPinia()

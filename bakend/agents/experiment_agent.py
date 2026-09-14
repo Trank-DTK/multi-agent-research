@@ -1,3 +1,4 @@
+from accounts.provider_service import build_llm
 # 实验助手Agent
 from langchain_classic.agents import initialize_agent, AgentType
 from langchain_classic.memory import ConversationBufferMemory
@@ -15,11 +16,7 @@ def create_experiment_agent(user, vector_service=None, memory=None, verbose=True
     print(f"create_experiment_agent: 开始创建，用户ID: {user.id}")
 
     try:
-        llm = OllamaLLM(
-            model="qwen2.5:7b",
-            base_url=get_ollama_base_url(),
-            temperature=0.7
-        )
+        llm = build_llm(user)
         print("create_experiment_agent: OllamaLLM 初始化成功")
 
         tools = [

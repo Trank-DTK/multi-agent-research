@@ -1,135 +1,43 @@
-# 多智能体协作API
+import json
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
-from .orchestrator import TaskOrchestrator
-from .literature_agent import create_literature_agent
-from .experiment_agent import create_experiment_agent
-from documents.services import VectorService
+from accounts.provider_service import build_llm
+from documents.context import research_context
 from chat.models import Conversation, Message
 
-# 存储编排器实例
-orchestrator_instances = {}
-
 class CollaborationResearchView(APIView):
-    """多智能体协作研究接口"""
     permission_classes = [IsAuthenticated]
-    
+    with_review = False
     def post(self, request):
-        user = request.user
-        question = request.data.get('question')
-        conversation_id = request.data.get('conversation_id')
-
-        if not question:
-            return JsonResponse({'error': '研究问题不能为空'}, status=400)
-
-        # 获取或创建对话
-        if conversation_id:
-            try:
-                conversation = Conversation.objects.get(id=conversation_id, user=user)
-            except Conversation.DoesNotExist:
-                return JsonResponse({'error': '对话不存在'}, status=404)
-        else:
-            conversation = Conversation.objects.create(
-                user=user,
-                title=question[:20] + '...' if len(question) > 20 else question
-            )
-
-        # 保存用户消息
-        Message.objects.create(
-            conversation=conversation,
-            role='user',
-            content=question
-        )
-
-        # 获取或创建编排器（使用用户ID作为key）
-        orchestrator_key = f"orchestrator_{user.id}"
-        if orchestrator_key not in orchestrator_instances:
-            print(f"[DEBUG] 创建新的 orchestrator，用户ID: {user.id}")
-            orchestrator = TaskOrchestrator(user)
-
-            # 创建智能体
-            vector_service = VectorService()
-            print(f"[DEBUG] VectorService 创建成功")
-
-            # 使用False关闭verbose，减少输出和内存
-            print(f"[DEBUG] 开始创建 literature_agent")
-            literature_agent = create_literature_agent(user, memory=None, verbose=False)
-            print(f"[DEBUG] literature_agent 创建成功")
-
-            print(f"[DEBUG] 开始创建 experiment_agent")
-            experiment_agent = create_experiment_agent(user, vector_service, memory=None, verbose=False)
-            print(f"[DEBUG] experiment_agent 创建成功")
-
-            # 注册智能体
-            orchestrator.register_agents(
-                literature_agent=literature_agent,
-                experiment_agent=experiment_agent
-            )
-            print(f"[DEBUG] 智能体注册完成")
-
-            orchestrator_instances[orchestrator_key] = orchestrator
-        else:
-            orchestrator = orchestrator_instances[orchestrator_key]
-
-        # 执行后清理已完成的orchestrator实例，避免内存泄漏
-        if len(orchestrator_instances) > 5:
-            # 保留最近5个，清理其他
-            sorted_keys = sorted(orchestrator_instances.keys())
-            for key in sorted_keys[:-5]:
-                del orchestrator_instances[key]
-
-        # 同步执行研究任务
+        question = str(request.data.get('question', '')).strip()
+        if not question or len(question) > 10000:
+            return JsonResponse({'error': '研究问题不能为空，且不能超过 10000 字'}, status=400)
+        ids = request.data.get('document_ids', [])
+        context = research_context(request.user, question, ids)
+        conversation = get_object_or_404(Conversation, pk=request.data['conversation_id'], user=request.user) if request.data.get('conversation_id') else Conversation.objects.create(user=request.user, title=question[:80])
+        Message.objects.create(conversation=conversation, role='user', content=question)
         try:
-            results = orchestrator.execute_research_task(question, conversation)
-
-            # 保存助手回复
-            final_report = results.get('final_report', '')
-            if final_report:
-                Message.objects.create(
-                    conversation=conversation,
-                    role='assistant',
-                    content=final_report[:2000]  # 限制长度
-                )
-
-            return JsonResponse({
-                'response': final_report[:1000],
-                'conversation_id': conversation.id,
-                'results': {
-                    'literature_review': results.get('literature_review', '')[:500],
-                    'experiment_design': results.get('experiment_design', '')[:500]
-                }
-            })
-
-        except Exception as e:
-            import sys, traceback
-            traceback.print_exc(file=sys.stderr)
-            return JsonResponse({'error': str(e)}, status=500)
-
+            llm = build_llm(request.user)
+            def run(role, content):
+                return llm.chat([{'role': 'system', 'content': role + '。请用中文，区分已有证据与研究建议，不虚构引用或实验结果。'}, {'role': 'user', 'content': content}])
+            literature = run('你是文献研究员，分析证据、研究空白和局限', context + '\n研究问题：' + question)
+            experiment = run('你是实验设计师，提出假设、变量、对照、评估指标和可复现步骤', question + '\n参考证据：' + literature)
+            report = run('你是研究负责人，整合成结构清晰的研究方案，保留文献 ID 引用', question + '\n文献分析：' + literature + '\n实验方案：' + experiment)
+            result = {'response': report, 'conversation_id': conversation.pk, 'results': {'literature_review': literature, 'experiment_design': experiment}, 'document_ids': ids}
+            if self.with_review or request.data.get('with_review') is True:
+                review = run('你是严格的科研评审员，指出证据、可行性、创新性和方法上的具体问题，并给出可执行的改进建议', context + '\n研究方案：' + report)
+                result['review'] = review
+            Message.objects.create(conversation=conversation, role='assistant', content=report + ('\n\n评审意见：\n' + result['review'] if result.get('review') else ''))
+            conversation.save()
+            return JsonResponse(result)
+        except ValueError as exc:
+            return JsonResponse({'error': str(exc), 'conversation_id': conversation.pk}, status=502)
 
 class CollaborationStatusView(APIView):
-    """查看协作任务状态"""
     permission_classes = [IsAuthenticated]
-    
     def get(self, request, task_id):
         from .models import Task
-        try:
-            task = Task.objects.get(id=task_id, user=request.user)
-            steps = task.steps.all()
-            
-            return JsonResponse({
-                'id': task.id,
-                'title': task.title,
-                'status': task.status,
-                'result': task.result[:500] if task.result else '',
-                'created_at': task.created_at,
-                'steps': [{
-                    'agent': s.agent_name,
-                    'action': s.action,
-                    'status': s.status,
-                    'output': s.output_data[:200]
-                } for s in steps]
-            })
-        except Task.DoesNotExist:
-            return JsonResponse({'error': '任务不存在'}, status=404)
+        task = get_object_or_404(Task, pk=task_id, user=request.user)
+        return JsonResponse({'id': task.pk, 'status': task.status, 'result': task.result})

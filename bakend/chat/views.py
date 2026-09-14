@@ -1,3 +1,4 @@
+from accounts.provider_service import build_llm
 import json
 import os
 import platform
@@ -7,7 +8,6 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from langchain_ollama import OllamaLLM
 from langchain_core.callbacks import BaseCallbackHandler
 from .serializers import ChatMessageSerializer
 from .models import ChatHistory,Message,Conversation
@@ -62,33 +62,27 @@ class ChatView(APIView):
             user_message = Message.objects.create(conversation=conversation, role='user', content=message)
 
 
-            #初始化ollama模型
+            llm = build_llm(request.user)
             try:
-                llm = OllamaLLM(model="qwen2.5:7b", base_url=get_ollama_base_url(),temperature=0.7)
-                response_text = llm.invoke(message)
+                history = list(conversation.messages.order_by('-created_at')[:20])
+                response_text = llm.chat([{'role': m.role, 'content': m.content} for m in reversed(history)])
             except Exception as e:
                 # Ollama服务未运行或模型不存在
-                response_text = f"抱歉，AI服务暂时不可用。请确保Ollama服务已运行并下载了qwen2.5:7b模型。\n\n错误详情：{str(e)}"
-                # 即使AI服务不可用，也保存一条消息提示用户
-                Message.objects.create(conversation=conversation, role='assistant', content=response_text)
+                response_text = f"抱歉，AI服务暂时不可用。请到设置检查模型供应商、地址和模型名称。\n\n错误详情：{str(e)}"
 
-            #保存AI回复（如果前面已保存则跳过）
-            try:
-                ai_message = Message.objects.get(conversation=conversation, role='assistant', content=response_text)
-            except Message.DoesNotExist:
-                ai_message = Message.objects.create(conversation=conversation, role='assistant', content=response_text)
+            ai_message = Message.objects.create(conversation=conversation, role='assistant', content=response_text)
 
             if conversation.title == "新对话":
                 conversation.title = message[:20] + '...' if len(message) > 20 else message
-                conversation.save()
+            conversation.save()
 
             #同时保存到ChatHistory（兼容旧版）
             try:
-                ChatHistory.objects.create(user=request.user, message=message, response=response_text, model_name="qwen2.5:7b")
+                ChatHistory.objects.create(user=request.user, message=message, response=response_text, model_name=llm.model)
             except:
                 pass  # 如果ChatHistory表不存在或有问题，忽略错误
 
-            return JsonResponse({"response": response_text,"model": "qwen2.5-7b",'conversation_id': conversation.id, 'message_id':ai_message.id})
+            return JsonResponse({"response": response_text,"model": llm.model,'conversation_id': conversation.id, 'message_id':ai_message.id})
         except Exception as e:
             return JsonResponse({"error": "服务器内部错误，请稍后再试。"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -162,54 +156,12 @@ class ChatStreamView(APIView):
         message = serializer.validated_data['message']
 
         
-        #创建一个队列用于存储生成的token
-        from collections import deque
-        token_queue = deque()
-
-        #初始化ollama模型，添加自定义流式回调
-        llm = OllamaLLM(
-            model="qwen2.5:7b",
-            base_url="http://localhost:11434",
-            temperature=0.7,
-            streaming=True,
-            callbacks=[StreamingCallbackHandler(token_queue)],
-        )
-
-        #异步调用模型生成回复
-        llm.invoke(message)
-
-        #使用生成器函数流式返回token
+        llm = build_llm(request.user)
         def generate():
-            #在子线程中运行模型生成回复，主线程负责从队列中读取token并返回给前端
-            import threading
-            def run_model():
-                try:
-                    llm.invoke(message)
-                except Exception as e:
-                    token_queue.append(f"[ERROR: {str(e)}]")
-                finally:
-                    token_queue.append(None)  #生成结束标志
-            thread = threading.Thread(target=run_model)
-            thread.start()
-
-            #不断从队列中取数据并发送
-            while True:
-                token = token_queue.popleft() if token_queue else None
-                if token is None:  #生成结束
-                    break
-                if token:
-                    # 以 Server-Sent Events 格式发送
-                    yield f"data: {json.dumps({'token': token})}\n\n"
+            try:
+                text = llm.chat([{'role': 'user', 'content': message}])
+                yield f"data: {json.dumps({'token': text}, ensure_ascii=False)}\n\n"
+            except ValueError as exc:
+                yield f"data: {json.dumps({'error': str(exc)}, ensure_ascii=False)}\n\n"
             yield "data: [DONE]\n\n"
         return StreamingHttpResponse(generate(), content_type='text/event-stream')
-
-            
-
-
-
-
-
-
-
-
-

@@ -1,17 +1,16 @@
+from accounts.provider_service import build_llm
 import json
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
-from langchain_community.llms import Ollama
 from .models import Dataset, AnalysisResult, DataVisualization
 from .serializers import (
     DatasetSerializer, DatasetUploadSerializer, 
     AnalysisRequestSerializer, VisualizationRequestSerializer
 )
 from .services import DataAnalysisService
-from agents.agent import get_ollama_base_url
 
 class DatasetUploadView(APIView):
     """数据集上传接口"""
@@ -36,12 +35,7 @@ class DatasetUploadView(APIView):
             stats = DataAnalysisService.descriptive_statistics(df)
             
             # 生成AI洞察
-            llm = Ollama(
-                model="qwen2.5:7b",
-                base_url=get_ollama_base_url(),
-                temperature=0.5
-            )
-            insight = DataAnalysisService.generate_insight(df, stats, {}, llm)
+            insight = DataAnalysisService.generate_insight(df, stats, {}, None)
             
             AnalysisResult.objects.create(
                 dataset=dataset,
@@ -120,11 +114,7 @@ class DataAnalysisView(APIView):
             analysis_type = request.data.get('analysis_type', 'descriptive')
             columns = request.data.get('columns', [])
             
-            llm = Ollama(
-                model="qwen2.5:7b",
-                base_url=get_ollama_base_url(),
-                temperature=0.5
-            )
+            llm = build_llm(request.user)
             
             if analysis_type == 'descriptive':
                 result = DataAnalysisService.descriptive_statistics(df, columns)

@@ -23,8 +23,8 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY bakend/ .
 
-RUN mkdir -p /app/static /app/media
+RUN mkdir -p /app/static /app/media /app/logs
 
 EXPOSE 8000
 
-CMD ["gunicorn", "bakend.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "bakend.wsgi:application", "--bind", "0.0.0.0:8000", "--timeout", "600"]

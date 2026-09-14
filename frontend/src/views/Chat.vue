@@ -1,15 +1,5 @@
 <template>
   <div class="chat-page">
-    <div class="page-header">
-      <button class="back-btn" @click="$router.push('/dashboard')">
-        <span class="btn-icon">←</span>
-        <span class="btn-text">返回主页</span>
-      </button>
-      <div class="header-content">
-        <h1>AI对话助手</h1>
-        <p class="subtitle">与智能助手进行自然对话，获取科研支持</p>
-      </div>
-    </div>
     <ChatInterface />
   </div>
 </template>
@@ -92,4 +82,5 @@ useKeyboardShortcuts([
   margin: 0 auto;
   line-height: 1.6;
 }
+.chat-page{max-width:none;padding:20px;height:100dvh}.chat-page :deep(.chat-container){height:100%;min-height:0;border-radius:18px}.chat-page :deep(button),.chat-page :deep(textarea){border-radius:10px}@media(max-width:1000px){.chat-page{height:calc(100dvh - 56px)}}
 </style>

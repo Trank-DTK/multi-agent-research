@@ -20,7 +20,12 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from accounts.views import RegisterView, UserDetailView
 
+from accounts.provider_views import ProviderListView, ProviderDetailView, ProviderTestView
+
 urlpatterns = [
+    path("api/settings/providers/", ProviderListView.as_view()),
+    path("api/settings/providers/<int:pk>/", ProviderDetailView.as_view()),
+    path("api/settings/providers/<int:pk>/test/", ProviderTestView.as_view()),
     path("admin/", admin.site.urls),
     path("api/auth/register/", RegisterView.as_view(), name="auth_register"),
     path("api/auth/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),

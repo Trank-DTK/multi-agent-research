@@ -1,3 +1,4 @@
+from accounts.provider_service import build_llm
 # 评审Agent
 from langchain_classic.agents import initialize_agent, AgentType
 from langchain_classic.memory import ConversationBufferMemory
@@ -10,14 +11,10 @@ from .critic_tools import (
 )
 from .agent import get_ollama_base_url
 
-def create_critic_agent(verbose=True):
+def create_critic_agent(verbose=True, user=None):
     """创建Critic评审智能体"""
     
-    llm = OllamaLLM(
-        model="qwen2.5:7b",
-        base_url=get_ollama_base_url(),
-        temperature=0.3  # 降低温度，让评估更稳定
-    )
+    llm = build_llm(user)
     
     tools = [
         QualityEvaluatorTool(llm=llm),
@@ -43,8 +40,8 @@ def create_critic_agent(verbose=True):
 class CriticService:
     """评审服务"""
     
-    def __init__(self):
-        self.agent = create_critic_agent(verbose=False)
+    def __init__(self, user=None):
+        self.agent = create_critic_agent(verbose=False, user=user)
     
     def evaluate_quality(self, content: str) -> dict:
         """评估内容质量"""

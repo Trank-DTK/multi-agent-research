@@ -1,14 +1,10 @@
 <!-- 论文写作页面 -->
 <template>
-  <div class="paper-writing-page">
+  <div class="paper-writing-page modern-page">
     <div class="page-header">
-      <button class="back-btn" @click="$router.push('/dashboard')">
-        <span class="btn-icon">←</span>
-        <span class="btn-text">返回主页</span>
-      </button>
       <div class="header-content">
         <div class="header-title">
-          <h1>✍️ 论文写作</h1>
+          <h1>论文写作</h1>
           <p class="subtitle">AI辅助的论文撰写、编辑和导出工具</p>
         </div>
         <button @click="showNewPaper = true" class="new-btn">
@@ -17,37 +13,45 @@
         </button>
       </div>
     </div>
-    
+
     <!-- 新建论文弹窗 -->
     <div v-if="showNewPaper" class="modal">
       <div class="modal-content">
         <h3>新建论文</h3>
         <input v-model="newPaperTitle" placeholder="论文标题" />
-        <textarea v-model="newPaperTopic" placeholder="研究主题（可选，用于生成大纲）" rows="3"></textarea>
+        <textarea
+          v-model="newPaperTopic"
+          placeholder="研究主题（可选，用于生成大纲）"
+          rows="3"
+        ></textarea>
         <div class="modal-buttons">
           <button @click="createPaper" :disabled="creating">创建</button>
           <button @click="showNewPaper = false">取消</button>
         </div>
       </div>
     </div>
-    
+
+    <p v-if="pageError" class="error-banner" role="alert">{{pageError}}</p>
     <div class="main-layout">
       <!-- 左侧：论文列表 -->
       <div class="paper-list">
-        <h3>我的论文</h3>
-        <div v-for="paper in papers" :key="paper.id" 
-             :class="['paper-item', { active: selectedPaper?.id === paper.id }]"
-             @click="selectPaper(paper.id)">
+        <h3>
+          我的论文 <span class="count-badge">{{ papers.length }}</span>
+        </h3>
+        <div
+          v-for="paper in papers"
+          :key="paper.id"
+          :class="['paper-item', { active: selectedPaper?.id === paper.id }]"
+          @click="selectPaper(paper.id)"
+        >
           <div class="paper-title">{{ paper.title }}</div>
           <div class="paper-status">{{ getStatusText(paper.status) }}</div>
           <div class="paper-time">{{ formatDate(paper.updated_at) }}</div>
           <button @click.stop="deletePaper(paper.id)" class="delete-paper">🗑️</button>
         </div>
-        <div v-if="papers.length === 0" class="empty">
-          暂无论文，点击上方按钮创建
-        </div>
+        <div v-if="papers.length === 0" class="empty">暂无论文，点击上方按钮创建</div>
       </div>
-      
+
       <!-- 右侧：编辑器 -->
       <div v-if="selectedPaper" class="editor-area">
         <div class="editor-header">
@@ -58,33 +62,39 @@
             <button @click="savePaper" :disabled="saving">保存</button>
           </div>
         </div>
-        
+
         <!-- 摘要区域 -->
         <div class="abstract-area">
           <label>摘要</label>
           <textarea v-model="selectedPaper.abstract" rows="4" @blur="savePaper"></textarea>
         </div>
-        
+
         <!-- 章节列表 -->
         <div class="sections">
-          <div v-for="(section, idx) in sections" :key="section.id" class="section-card">
+          <div v-for="section in sections" :key="section.id" class="section-card">
             <div class="section-header">
               <input v-model="section.title" class="section-title" @blur="saveSection(section)" />
-              <button @click="polishSection(section)" class="polish-btn" :disabled="polishing">润色</button>
+              <button @click="polishSection(section)" class="polish-btn" :disabled="polishing">
+                润色
+              </button>
               <button @click="deleteSection(section.id)" class="delete-section">×</button>
             </div>
             <div class="section-content">
-              <QuillEditor v-model:content="section.content" contentType="html" @blur="saveSection(section)" />
+              <QuillEditor
+                v-model:content="section.content"
+                contentType="html"
+                @blur="saveSection(section)"
+              />
             </div>
           </div>
-          
+
           <div class="add-section">
             <input v-model="newSectionTitle" placeholder="新章节标题" />
             <button @click="addSection" :disabled="!newSectionTitle">+ 添加章节</button>
             <button @click="generateSection" :disabled="!newSectionTitle">🤖 AI生成</button>
           </div>
         </div>
-        
+
         <!-- AI助手聊天 -->
         <div class="ai-assistant">
           <h4>🤖 写作助手</h4>
@@ -94,15 +104,22 @@
             </div>
           </div>
           <div class="chat-input">
-            <input v-model="chatInput" @keydown.enter="sendChat" placeholder="问关于写作的问题..." />
+            <input
+              v-model="chatInput"
+              @keydown.enter="sendChat"
+              placeholder="问关于写作的问题..."
+            />
             <button @click="sendChat" :disabled="chatLoading">发送</button>
           </div>
         </div>
       </div>
-      
+
       <!-- 未选择论文时的占位 -->
       <div v-else class="empty-editor">
-        <p>请选择或创建一篇论文</p>
+        <el-icon><EditPen /></el-icon>
+        <h2>把研究写成作品</h2>
+        <p>选择已有论文继续编辑，或从一个新标题开始。</p>
+        <button class="primary-button" @click="showNewPaper = true">＋ 创建论文</button>
       </div>
     </div>
   </div>
@@ -111,6 +128,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from '../axios'
+import {apiError} from '@/utils/apiError'
+const pageError=ref('')
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
@@ -145,18 +164,18 @@ const fetchPapers = async () => {
     const res = await axios.get('/papers/')
     papers.value = res.data
   } catch (error) {
-    console.error('获取论文列表失败', error)
+    pageError.value=apiError(error,'获取论文列表失败')
   }
 }
 
 const createPaper = async () => {
   if (!newPaperTitle.value) return
-  
+
   creating.value = true
   try {
     const res = await axios.post('/papers/create/', {
       title: newPaperTitle.value,
-      topic: newPaperTopic.value
+      topic: newPaperTopic.value,
     })
     showNewPaper.value = false
     newPaperTitle.value = ''
@@ -164,7 +183,7 @@ const createPaper = async () => {
     await fetchPapers()
     await selectPaper(res.data.id)
   } catch (error) {
-    console.error('创建论文失败', error)
+    pageError.value=apiError(error,'创建论文失败')
   } finally {
     creating.value = false
   }
@@ -176,13 +195,13 @@ const selectPaper = async (paperId) => {
     selectedPaper.value = res.data
     sections.value = res.data.sections || []
   } catch (error) {
-    console.error('加载论文失败', error)
+    pageError.value=apiError(error,'加载论文失败')
   }
 }
 
 const savePaper = async () => {
   if (!selectedPaper.value) return
-  
+
   saving.value = true
   try {
     await axios.put(`/papers/${selectedPaper.value.id}/`, {
@@ -190,76 +209,77 @@ const savePaper = async () => {
       abstract: selectedPaper.value.abstract,
       keywords: selectedPaper.value.keywords,
       content: selectedPaper.value.content,
-      status: selectedPaper.value.status
+      status: selectedPaper.value.status,
     })
   } catch (error) {
-    console.error('保存失败', error)
+    pageError.value=apiError(error,'保存失败')
   } finally {
     saving.value = false
   }
 }
 
 const saveSection = async (section) => {
-  // 章节保存逻辑
-  await savePaper()
+  try { await axios.patch(`/papers/${selectedPaper.value.id}/sections/${section.id}/`, {title:section.title,content:section.content}) }
+  catch(error){ pageError.value=apiError(error,'章节保存失败，请重试') }
 }
 
 const addSection = async () => {
   if (!newSectionTitle.value || !selectedPaper.value) return
-  
+
   try {
     const res = await axios.post(`/papers/${selectedPaper.value.id}/section/`, {
       title: newSectionTitle.value,
-      context: selectedPaper.value.abstract || ''
+      context: selectedPaper.value.abstract || '',
+      generate: false,
     })
     sections.value.push({
       id: res.data.section_id,
       title: newSectionTitle.value,
-      content: res.data.content
+      content: res.data.content,
     })
     newSectionTitle.value = ''
   } catch (error) {
-    console.error('添加章节失败', error)
+    pageError.value=apiError(error,'添加章节失败')
   }
 }
 
 const generateSection = async () => {
   if (!newSectionTitle.value || !selectedPaper.value) return
-  
+
   try {
     const res = await axios.post(`/papers/${selectedPaper.value.id}/section/`, {
       title: newSectionTitle.value,
       context: `研究主题：${selectedPaper.value.title}\n摘要：${selectedPaper.value.abstract || ''}`,
-      word_count: 500
+      word_count: 500,
     })
     sections.value.push({
       id: res.data.section_id,
       title: newSectionTitle.value,
-      content: res.data.content
+      content: res.data.content,
     })
     newSectionTitle.value = ''
   } catch (error) {
-    console.error('AI生成章节失败', error)
+    pageError.value=apiError(error,'AI生成章节失败')
   }
 }
 
 const deleteSection = async (sectionId) => {
-  sections.value = sections.value.filter(s => s.id !== sectionId)
-  await savePaper()
+  try { await axios.delete(`/papers/${selectedPaper.value.id}/sections/${sectionId}/`); sections.value=sections.value.filter(s=>s.id!==sectionId) }
+  catch(error){pageError.value=apiError(error,'删除章节失败')}
 }
 
 const generateAbstract = async () => {
   if (!selectedPaper.value) return
-  
+
   generatingAbstract.value = true
   try {
     const res = await axios.post(`/papers/${selectedPaper.value.id}/abstract/`, {
-      content: sections.value.map(s => s.content).join('\n')
+      content: sections.value.map((s) => s.content).join('\n'),
     })
     selectedPaper.value.abstract = res.data.abstract
     await savePaper()
   } catch (error) {
-    console.error('生成摘要失败', error)
+    pageError.value=apiError(error,'生成摘要失败')
   } finally {
     generatingAbstract.value = false
   }
@@ -270,12 +290,12 @@ const polishSection = async (section) => {
   try {
     const res = await axios.post('/polish/', {
       text: section.content,
-      style: 'academic'
+      style: 'academic',
     })
     section.content = res.data.polished
     await saveSection(section)
   } catch (error) {
-    console.error('润色失败', error)
+    pageError.value=apiError(error,'润色失败')
   } finally {
     polishing.value = false
   }
@@ -288,7 +308,7 @@ const exportDocx = async () => {
   try {
     // 使用axios下载文件，以便处理错误
     const response = await axios.get(`/papers/${selectedPaper.value.id}/export/`, {
-      responseType: 'blob'
+      responseType: 'blob',
     })
 
     // 检查响应状态
@@ -326,7 +346,7 @@ const exportDocx = async () => {
       alert(`导出失败: ${errorMsg}`)
     }
   } catch (error) {
-    console.error('导出失败', error)
+    pageError.value=apiError(error,'导出失败')
     if (error.response) {
       // 服务器返回了错误状态码
       let errorMsg = '导出失败'
@@ -351,7 +371,7 @@ const exportDocx = async () => {
 
 const deletePaper = async (paperId) => {
   if (!confirm('确定删除这篇论文吗？')) return
-  
+
   try {
     await axios.delete(`/papers/${paperId}/delete/`)
     await fetchPapers()
@@ -360,23 +380,23 @@ const deletePaper = async (paperId) => {
       sections.value = []
     }
   } catch (error) {
-    console.error('删除失败', error)
+    pageError.value=apiError(error,'删除失败')
   }
 }
 
 const sendChat = async () => {
-  if (!chatInput.value.trim()) return
-  
+  if (!chatInput.value.trim() || chatLoading.value) return
+
   const userMsg = chatInput.value
   chatMessages.value.push({ role: 'user', content: userMsg })
   chatInput.value = ''
   chatLoading.value = true
-  
+
   try {
     const res = await axios.post('/agent/', { message: userMsg })
     chatMessages.value.push({ role: 'assistant', content: res.data.response })
   } catch (error) {
-    chatMessages.value.push({ role: 'assistant', content: '抱歉，处理失败' })
+    chatMessages.value.push({ role: 'assistant', content: apiError(error,'处理失败') })
   } finally {
     chatLoading.value = false
   }
@@ -390,399 +410,257 @@ onMounted(() => {
 <style scoped>
 .paper-writing-page {
   max-width: 1600px;
-  margin: 0 auto;
-  padding: 40px 24px;
 }
-
 .page-header {
-  position: relative;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
 }
-
-.back-btn {
-  position: absolute;
-  top: 0;
-  left: 0;
-  padding: 10px 16px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  z-index: 10;
-}
-
-.back-btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--success-color);
-  transform: translateX(-4px);
-}
-
-.btn-icon {
-  font-size: 16px;
-}
-
 .header-content {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-  padding-left: 120px; /* 为返回按钮留出空间 */
-}
-
-.header-title h1 {
-  font-size: 36px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: var(--text-primary);
-  background: linear-gradient(135deg, var(--success-color) 0%, #36a1ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.subtitle {
-  font-size: 16px;
-  color: var(--text-secondary);
-  max-width: 600px;
-  line-height: 1.6;
-}
-
-.new-btn {
-  padding: 14px 24px;
-  background: linear-gradient(135deg, var(--success-color) 0%, #36a1ff 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  min-width: 140px;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+  width: 100%;
 }
-
-.new-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.3);
+.header-title h1 {
+  font-size: 28px;
+  margin: 0 0 10px;
 }
-
-.btn-icon {
-  font-size: 18px;
-  font-weight: 600;
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 13px;
 }
-
-.btn-text {
-  font-size: 14px;
-}
-
 .main-layout {
-  display: flex;
-  gap: 20px;
-  min-height: 70vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 22px;
+  min-height: calc(100dvh - 170px);
 }
-
-.paper-list {
-  width: 260px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  padding: 15px;
+.paper-list,
+.editor-area,
+.empty-editor {
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 22px;
+  min-width: 0;
 }
-
 .paper-list h3 {
-  margin-bottom: 15px;
+  font-size: 16px;
+  margin-top: 0;
 }
-
 .paper-item {
-  padding: 10px;
-  margin-bottom: 8px;
-  background-color: white;
-  border-radius: 6px;
-  cursor: pointer;
   position: relative;
-  border: 1px solid transparent;
+  padding: 15px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 11px;
+  margin-bottom: 12px;
+  cursor: pointer;
 }
-
-.paper-item:hover {
-  border-color: #1890ff;
-}
-
 .paper-item.active {
-  border-color: #1890ff;
-  background-color: #e8f5e9;
+  border-color: var(--success-color);
+  background: var(--accent-soft);
 }
-
 .paper-title {
-  font-weight: 500;
-  margin-bottom: 4px;
+  font-size: 13px;
+  line-height: 1.8;
+  padding-right: 18px;
+  overflow-wrap: anywhere;
 }
-
 .paper-status {
   font-size: 11px;
-  color: #999;
+  color: var(--success-color);
+  margin-top: 8px;
 }
-
 .paper-time {
   font-size: 10px;
-  color: #ccc;
+  color: var(--text-tertiary);
+  margin-top: 5px;
 }
-
 .delete-paper {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  opacity: 0;
+  right: 5px;
+  top: 10px;
+  background: none !important;
+  border: 0 !important;
+  padding: 5px !important;
 }
-
-.paper-item:hover .delete-paper {
-  opacity: 1;
+.empty-editor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
 }
-
-.editor-area {
-  flex: 1;
-  background-color: white;
-  border-radius: 8px;
-  padding: 20px;
-  border: 1px solid #e0e0e0;
+.empty-editor > .el-icon {
+  font-size: 48px;
+  color: var(--success-color);
 }
-
+.empty-editor h2 {
+  font-size: 22px;
+}
+.empty-editor p,
+.empty {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+.empty-editor button {
+  margin-top: 15px;
+}
 .editor-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
-
 .title-input {
-  font-size: 24px;
-  font-weight: bold;
-  border: none;
-  width: 60%;
-  padding: 8px;
+  flex: 1;
+  font-size: 20px !important;
+  font-weight: 600;
 }
-
-.title-input:focus {
-  outline: none;
-  border-bottom: 1px solid #1890ff;
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-
-.actions button {
-  padding: 6px 12px;
-  margin-left: 10px;
-  background-color: #1890ff;
+button {
+  border: 1px solid var(--border-color);
+  background: var(--accent-soft);
+  color: var(--success-color);
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-size: 12px;
+}
+.new-btn {
+  background: #326bd6;
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  padding: 12px 20px;
 }
-
 .abstract-area {
-  margin-bottom: 20px;
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  font-size: 13px;
 }
-
-.abstract-area label {
-  font-weight: bold;
-  display: block;
-  margin-bottom: 8px;
-}
-
-.abstract-area textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  resize: vertical;
-}
-
-.sections {
-  margin-bottom: 20px;
-}
-
 .section-card {
-  margin-bottom: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   overflow: hidden;
+  margin-top: 22px;
 }
-
 .section-header {
   display: flex;
-  align-items: center;
-  padding: 10px 15px;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #e0e0e0;
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg-primary);
 }
-
+input,
+textarea {
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  min-width: 0;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  font-size: 13px;
+}
 .section-title {
   flex: 1;
-  font-size: 18px;
-  font-weight: bold;
-  border: none;
-  background: transparent;
-  padding: 5px;
 }
-
-.section-title:focus {
-  outline: none;
-}
-
-.polish-btn, .delete-section {
-  margin-left: 10px;
-  padding: 4px 10px;
-  background-color: #ff9800;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.delete-section {
-  background-color: #f44336;
-}
-
-.section-content {
-  padding: 15px;
-  min-height: 200px;
-}
-
 .add-section {
   display: flex;
   gap: 10px;
-  margin-top: 15px;
+  flex-wrap: wrap;
+  margin-top: 22px;
 }
-
-.add-section input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.add-section button {
-  padding: 8px 16px;
-  background-color: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 .ai-assistant {
-  margin-top: 30px;
-  border-top: 1px solid #e0e0e0;
+  margin-top: 25px;
+  border-top: 1px solid var(--border-color);
   padding-top: 20px;
 }
-
-.ai-assistant h4 {
-  margin-bottom: 15px;
-}
-
 .chat-messages {
-  height: 200px;
-  overflow-y: auto;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 10px;
+  max-height: 280px;
+  overflow: auto;
 }
-
 .message {
+  white-space: pre-wrap;
+  line-height: 1.8;
+  font-size: 13px;
+  background: var(--bg-primary);
+  padding: 13px;
+  border-radius: 10px;
   margin-bottom: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
 }
-
 .message.user {
-  background-color: #1890ff;
-  color: white;
-  text-align: right;
+  background: var(--accent-soft);
 }
-
-.message.assistant {
-  background-color: white;
-  border: 1px solid #e0e0e0;
-}
-
 .chat-input {
   display: flex;
   gap: 10px;
 }
-
 .chat-input input {
   flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
 }
-
-.chat-input button {
-  padding: 10px 20px;
-  background-color: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.empty-editor {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  color: #999;
-}
-
-.empty {
-  text-align: center;
-  color: #999;
-  padding: 20px;
-}
-
 .modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+  inset: 0;
+  background: #14264088;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
 }
-
 .modal-content {
-  background-color: white;
-  padding: 30px;
-  border-radius: 8px;
-  width: 450px;
+  width: min(500px, 100%);
+  background: var(--bg-secondary);
+  border-radius: 18px;
+  padding: 28px;
+  display: grid;
+  gap: 18px;
 }
-
-.modal-content input, .modal-content textarea {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.modal-content h3 {
+  margin: 0;
 }
-
 .modal-buttons {
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
-  margin-top: 20px;
+}
+:deep(.ql-toolbar),
+:deep(.ql-container) {
+  border-color: var(--border-color);
+}
+:deep(.ql-editor) {
+  min-height: 180px;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.9;
+}
+@media (max-width: 760px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+  }
+  .paper-list {
+    max-height: 280px;
+    overflow: auto;
+  }
+  .empty-editor {
+    min-height: 380px;
+  }
+  .editor-area {
+    padding: 16px;
+  }
+  .section-header {
+    flex-wrap: wrap;
+  }
+  .section-title {
+    width: 100%;
+  }
+  .header-content {
+    gap: 12px;
+  }
+  .title-input {
+    width: 100%;
+  }
 }
 </style>

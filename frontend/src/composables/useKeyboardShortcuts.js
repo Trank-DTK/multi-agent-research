@@ -3,6 +3,11 @@ import { onMounted, onUnmounted } from 'vue'
 
 export function useKeyboardShortcuts(shortcuts) {
   const handleKeydown = (event) => {
+    if (
+      event.isComposing ||
+      event.target?.closest?.('input, textarea, select, [contenteditable="true"]')
+    )
+      return
     const key = event.key.toLowerCase()
     const ctrl = event.ctrlKey || event.metaKey
     const alt = event.altKey
