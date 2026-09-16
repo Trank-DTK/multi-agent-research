@@ -22,7 +22,9 @@
         <span class="message-role">{{ message.role === 'user' ? '你' : '研究助手' }}</span>
         <div>{{ message.content }}</div>
       </article>
-      <p v-if="loading" class="thinking" role="status">正在分析你的问题…</p>
+      <p v-if="loading && (!streaming || !messages.at(-1)?.content)" class="thinking" role="status">
+        正在分析你的问题…
+      </p>
     </div>
     <p v-if="error" class="error-banner" role="alert">{{ error }}</p>
     <form class="conversation-composer" @submit.prevent="send">
@@ -43,8 +45,11 @@
   </section>
 </template>
 <script setup>
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick, watch, onBeforeUnmount } from 'vue'
 import axios from '@/axios'
+import { streamChat } from '@/utils/streamChat'
+let streamController
+onBeforeUnmount(() => streamController?.abort())
 import { apiError, submitOnEnter } from '@/utils/apiError'
 const props = defineProps({
   endpoint: { type: String, required: true },
@@ -55,6 +60,7 @@ const props = defineProps({
   placeholder: { type: String, default: '输入研究问题…' },
   context: { type: Object, default: () => ({}) },
   disabled: Boolean,
+  streaming: Boolean,
   prompt: { type: String, default: '' },
 })
 const input = ref(''),
@@ -88,14 +94,32 @@ async function send() {
   error.value = ''
   scroll()
   try {
-    const { data } = await axios.post(
-      props.endpoint,
-      { message, conversation_id: conversationId.value, ...props.context },
-      { timeout: 180000 },
-    )
-    messages.value.push({ role: 'assistant', content: data.response })
-    conversationId.value = data.conversation_id || null
+    if (props.streaming) {
+      streamController = new AbortController()
+      messages.value.push({ role: 'assistant', content: '' })
+      const answer = messages.value.at(-1)
+      await streamChat(
+        props.endpoint,
+        { message, ...props.context },
+        (event) => {
+          if (event.token) {
+            answer.content += event.token
+            scroll()
+          }
+        },
+        streamController.signal,
+      )
+    } else {
+      const { data } = await axios.post(
+        props.endpoint,
+        { message, conversation_id: conversationId.value, ...props.context },
+        { timeout: 180000 },
+      )
+      messages.value.push({ role: 'assistant', content: data.response })
+      conversationId.value = data.conversation_id || null
+    }
   } catch (e) {
+    if (e.name === 'AbortError') return
     error.value = apiError(e)
     if (e.response?.data?.conversation_id) conversationId.value = e.response.data.conversation_id
     if (!input.value) input.value = message

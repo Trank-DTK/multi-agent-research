@@ -1,6 +1,8 @@
 export function apiError(error, fallback = '请求失败，请稍后重试') {
   const data = error.response?.data
-  if (typeof data === 'string') return fallback
+  if (typeof data === 'string')
+    return `服务返回异常（HTTP ${error.response.status}），请检查后端服务`
+  if (!data && error.message && !error.isAxiosError) return error.message
   const message = data?.error?.message || data?.error || data?.detail || data?.message
   if (typeof message === 'string') return message
   if (data && typeof data === 'object')

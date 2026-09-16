@@ -2,16 +2,17 @@
 import base64
 import hashlib
 import os
-from urllib.parse import urlsplit
+import json
+from urllib.parse import urlsplit, urlunsplit
 import requests
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from langchain_core.language_models.llms import LLM
 from pydantic import SecretStr
 
 
 def cipher():
-    secret = getattr(settings, "MODEL_KEY_SECRET", settings.SECRET_KEY)
+    secret = getattr(settings, "MODEL_KEY_SECRET", None) or settings.SECRET_KEY
     return Fernet(base64.urlsafe_b64encode(hashlib.sha256(secret.encode()).digest()))
 
 
@@ -20,7 +21,10 @@ def encrypt_key(value):
 
 
 def decrypt_key(value):
-    return cipher().decrypt(value.encode()).decode() if value else ""
+    try:
+        return cipher().decrypt(value.encode()).decode() if value else ""
+    except InvalidToken:
+        raise ValueError("已保存的密钥无法解密，请在设置中重新填写 API Key 并保存") from None
 
 
 def validate_base_url(value):
@@ -42,6 +46,26 @@ def validate_base_url(value):
     return value.rstrip("/")
 
 
+def model_endpoint(base_url, protocol):
+    base = validate_base_url(base_url.strip())
+    parts = urlsplit(base)
+    # A local service runs on the host, rather than inside the application container.
+    if os.path.exists('/.dockerenv') and parts.hostname in ('localhost', '127.0.0.1', '::1'):
+        host = 'host.docker.internal' + (f':{parts.port}' if parts.port else '')
+        base = urlunsplit((parts.scheme, host, parts.path, '', ''))
+    if protocol == 'ollama':
+        for suffix in ('/api/chat', '/v1/chat/completions', '/v1', '/api'):
+            if base.endswith(suffix):
+                base = base[:-len(suffix)]
+                break
+        return base + '/api/chat'
+    if base.endswith('/chat/completions'):
+        return base
+    if not urlsplit(base).path:
+        base += '/v1'
+    return base + '/chat/completions'
+
+
 class ProviderLLM(LLM):
     base_url: str
     model: str
@@ -57,14 +81,13 @@ class ProviderLLM(LLM):
         return {"model": self.model, "protocol": self.protocol}
 
     def chat(self, messages, timeout=120):
-        base = validate_base_url(self.base_url)
-        endpoint = "/api/chat" if self.protocol == "ollama" else "/chat/completions"
+        endpoint = model_endpoint(self.base_url, self.protocol)
         body = {"model": self.model, "messages": messages, "stream": False}
         headers = {"Content-Type": "application/json"}
         if self.api_key.get_secret_value():
             headers["Authorization"] = "Bearer " + self.api_key.get_secret_value()
         try:
-            response = requests.post(base + endpoint, json=body, headers=headers, timeout=(10, timeout), allow_redirects=False)
+            response = requests.post(endpoint, json=body, headers=headers, timeout=(10, timeout), allow_redirects=False)
             if response.status_code >= 300:
                 raise ValueError(f"模型服务返回 HTTP {response.status_code}，请检查地址、密钥、模型 ID 和额度")
             data = response.json()
@@ -78,6 +101,63 @@ class ProviderLLM(LLM):
             raise ValueError("无法连接模型服务，请检查 Base URL 和服务状态") from None
         except (KeyError, IndexError, TypeError):
             raise ValueError("模型响应格式不兼容，请选择正确的接口协议") from None
+
+    def stream_chat(self, messages, timeout=180):
+        headers = {"Content-Type": "application/json"}
+        if self.api_key.get_secret_value():
+            headers["Authorization"] = "Bearer " + self.api_key.get_secret_value()
+        response = None
+        emitted = False
+        completed = False
+        try:
+            response = requests.post(model_endpoint(self.base_url, self.protocol),
+                json={"model": self.model, "messages": messages, "stream": True},
+                headers=headers, timeout=(10, timeout), allow_redirects=False, stream=True)
+            if response.status_code >= 300:
+                raise ValueError(f"模型服务返回 HTTP {response.status_code}，请检查地址、密钥、模型 ID 和额度")
+            for raw in response.iter_lines(chunk_size=1):
+                line = raw.decode('utf-8') if isinstance(raw, bytes) else raw
+                if not line or line.startswith(':'):
+                    continue
+                if self.protocol == 'openai':
+                    if not line.startswith('data:'):
+                        continue
+                    line = line[5:].strip()
+                    if line == '[DONE]':
+                        completed = True
+                        break
+                data = json.loads(line)
+                if data.get('error'):
+                    raise ValueError("模型生成失败，请检查模型 ID、服务状态与额度")
+                if self.protocol == 'ollama':
+                    token = data.get('message', {}).get('content', '')
+                    completed = bool(data.get('done'))
+                else:
+                    choices = data.get('choices', [])
+                    if not choices:
+                        continue
+                    token = choices[0].get('delta', {}).get('content') or ''
+                    completed = choices[0].get('finish_reason') is not None
+                if token:
+                    if not isinstance(token, str):
+                        raise ValueError("模型响应格式不兼容")
+                    emitted = True
+                    yield token
+                if completed:
+                    break
+            if not completed:
+                raise ValueError("模型连接中断，回复尚未完成，请重试")
+            if not emitted:
+                raise ValueError("模型未返回文本，请确认选择的是支持对话的模型")
+        except requests.Timeout:
+            raise ValueError("模型请求超时，请检查模型服务或稍后重试") from None
+        except requests.RequestException:
+            raise ValueError("模型连接中断或无法连接，请检查 Base URL 和服务状态") from None
+        except (KeyError, IndexError, TypeError, json.JSONDecodeError, UnicodeDecodeError):
+            raise ValueError("模型响应格式不兼容，请选择正确的接口协议") from None
+        finally:
+            if response is not None:
+                response.close()
 
     def _call(self, prompt, stop=None, run_manager=None, **kwargs):
         text = self.chat([{"role": "user", "content": prompt}])

@@ -64,7 +64,7 @@
           <div class="avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
           <div class="content">{{ msg.content }}</div>
         </div>
-        <div v-if="loading" class="message assistant">
+        <div v-if="loading && !messages.at(-1)?.content" class="message assistant">
           <div class="avatar">🤖</div>
           <div class="content typing">正在输入...</div>
         </div>
@@ -91,8 +91,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import axios from '@/axios'
+import { streamChat } from '@/utils/streamChat'
+import { apiError } from '@/utils/apiError'
+let streamController
+onBeforeUnmount(() => streamController?.abort())
 
 // 状态变量
 const messages = ref([])
@@ -207,32 +211,32 @@ const sendMessage = async () => {
   loading.value = true
 
   try {
-    const response = await axios.post(
-      '/chat/',
+    streamController = new AbortController()
+    messages.value.push({ role: 'assistant', content: '' })
+    const answer = messages.value.at(-1)
+    await streamChat(
+      '/chat/stream/',
       {
         sender: 'user',
         message: userMessage,
         conversation_id: currentConversationId.value,
       },
-      { timeout: 120000 },
+      (event) => {
+        if (event.conversation_id) currentConversationId.value = event.conversation_id
+        if (event.token) {
+          answer.content += event.token
+          scrollToBottom()
+        }
+        if (event.message_id) answer.id = event.message_id
+      },
+      streamController.signal,
     )
-
-    messages.value.push({
-      role: 'assistant',
-      content: response.data.response,
-    })
-
-    // 更新当前会话ID（如果是新会话）
-    if (!currentConversationId.value) {
-      currentConversationId.value = response.data.conversation_id
-      await fetchConversations()
-    }
+    await fetchConversations()
   } catch (error) {
-    console.error('聊天出错:', error)
-    messages.value.push({
-      role: 'assistant',
-      content: '抱歉，我遇到了一些问题，请稍后再试。',
-    })
+    if (error.name !== 'AbortError') {
+      requestError.value = apiError(error)
+      if (!inputMessage.value) inputMessage.value = userMessage
+    }
   } finally {
     loading.value = false
     scrollToBottom()
@@ -257,7 +261,7 @@ onMounted(() => {
 .chat-container {
   display: flex;
   height: 600px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--chat-border-color);
   border-radius: 8px;
   overflow: hidden;
   position: relative;
@@ -266,14 +270,14 @@ onMounted(() => {
 .sidebar {
   width: 260px;
   background-color: var(--bg-primary);
-  border-right: 1px solid #e0e0e0;
+  border-right: 1px solid var(--chat-border-color);
   display: flex;
   flex-direction: column;
 }
 
 .sidebar-header {
   padding: 15px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--chat-border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -436,13 +440,13 @@ onMounted(() => {
   display: flex;
   padding: 15px;
   background-color: var(--bg-secondary);
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--chat-border-color);
 }
 
 textarea {
   flex: 1;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--chat-border-color);
   border-radius: 4px;
   resize: none;
   margin-right: 10px;

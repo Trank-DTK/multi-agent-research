@@ -146,22 +146,26 @@ class ConversationDeleteView(APIView):
 
 
 class ChatStreamView(APIView):
-    """流式聊天窗口"""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        from accounts.streaming import stream_response
         serializer = ChatMessageSerializer(data=request.data)
-        if not serializer.is_valid():
-            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         message = serializer.validated_data['message']
-
-        
-        llm = build_llm(request.user)
-        def generate():
-            try:
-                text = llm.chat([{'role': 'user', 'content': message}])
-                yield f"data: {json.dumps({'token': text}, ensure_ascii=False)}\n\n"
-            except ValueError as exc:
-                yield f"data: {json.dumps({'error': str(exc)}, ensure_ascii=False)}\n\n"
-            yield "data: [DONE]\n\n"
-        return StreamingHttpResponse(generate(), content_type='text/event-stream')
+        conversation_id = request.data.get('conversation_id')
+        conversation = get_object_or_404(Conversation, id=conversation_id, user=request.user) if conversation_id else None
+        try:
+            llm = build_llm(request.user)
+        except ValueError as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
+        if conversation is None:
+            conversation = Conversation.objects.create(user=request.user, title=message[:20])
+        Message.objects.create(conversation=conversation, role='user', content=message)
+        history = list(conversation.messages.order_by('-created_at', '-id')[:20])
+        prompt = [{'role': item.role, 'content': item.content} for item in reversed(history)]
+        def save_answer(text):
+            answer = Message.objects.create(conversation=conversation, role='assistant', content=text)
+            conversation.save()
+            return {'message_id': answer.id}
+        return stream_response(llm, prompt, {'conversation_id': conversation.id}, save_answer)

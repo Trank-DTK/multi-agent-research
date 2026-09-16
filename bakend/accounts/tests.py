@@ -53,6 +53,15 @@ class ProviderTests(TestCase):
         self.payload.update(protocol='ollama',base_url='http://localhost:11434',api_key='')
         data=self.create()
         self.assertFalse(data['has_api_key'])
+    def test_explicit_default_create_and_switch_to_local(self):
+        self.payload['is_default'] = True
+        first = self.create()
+        self.payload.update(name='Local', protocol='ollama', base_url='http://ollama:11434', api_key='')
+        second = self.create()
+        self.assertFalse(ModelProvider.objects.get(pk=first['id']).is_default)
+        self.assertEqual(build_llm(self.user).protocol, 'ollama')
+        self.assertEqual(second['base_url'], 'http://ollama:11434')
+
     def test_unauthenticated_access_is_denied(self):
         self.client = APIClient()
         self.assertIn(self.client.get('/providers/').status_code,[401,403])
@@ -106,3 +115,48 @@ class ResearchScopeTests(TestCase):
                 self.assertIn('SELECTED_EVIDENCE',prompts)
                 self.assertNotIn('EXCLUDED_EVIDENCE',prompts)
                 build.assert_called_once_with(user)
+
+class StreamingTransportTests(SimpleTestCase):
+    @patch('accounts.provider_service.requests.post')
+    def test_openai_yields_before_completion_and_closes(self, post):
+        response = Mock(status_code=200)
+        response.iter_lines.return_value = iter([
+            b': keepalive', b'data: {"choices":[{"delta":{"content":"first"},"finish_reason":null}]}',
+            b'data: {"choices":[{"delta":{"content":"second"},"finish_reason":null}]}',
+            b'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}', b'data: [DONE]'])
+        post.return_value = response
+        stream = ProviderLLM(base_url='https://example.com/v1',model='test').stream_chat([])
+        self.assertEqual(next(stream), 'first')
+        response.close.assert_not_called()
+        self.assertEqual(list(stream), ['second'])
+        response.close.assert_called_once()
+        self.assertTrue(post.call_args.kwargs['stream'])
+        self.assertTrue(post.call_args.kwargs['json']['stream'])
+
+    @patch('accounts.provider_service.requests.post')
+    def test_ollama_unicode_and_truncation(self, post):
+        response = Mock(status_code=200)
+        response.iter_lines.return_value = iter(['{"message":{"content":"你好"},"done":false}'.encode(), b'{"message":{"content":"!"},"done":true}'])
+        post.return_value = response
+        llm = ProviderLLM(base_url='http://localhost:11434',model='local',protocol='ollama')
+        self.assertEqual(list(llm.stream_chat([])), ['你好', '!'])
+        response.iter_lines.return_value = iter([b'{"message":{"content":"partial"},"done":false}'])
+        with self.assertRaisesRegex(ValueError, '中断'):
+            list(llm.stream_chat([]))
+
+    def test_docker_and_endpoint_normalization(self):
+        from .provider_service import model_endpoint
+        with patch('accounts.provider_service.os.path.exists', return_value=True):
+            self.assertEqual(model_endpoint('http://localhost:11434/v1', 'ollama'), 'http://host.docker.internal:11434/api/chat')
+            self.assertEqual(model_endpoint('http://127.0.0.1:1234', 'openai'), 'http://host.docker.internal:1234/v1/chat/completions')
+        self.assertEqual(model_endpoint('https://example.com/v1/chat/completions', 'openai'), 'https://example.com/v1/chat/completions')
+
+    @patch('accounts.provider_service.requests.post')
+    def test_cancelling_closes_provider_connection(self, post):
+        response = Mock(status_code=200)
+        response.iter_lines.return_value = iter([b'data: {"choices":[{"delta":{"content":"one"}}]}'])
+        post.return_value = response
+        stream = ProviderLLM(base_url='https://example.com/v1',model='test').stream_chat([])
+        next(stream)
+        stream.close()
+        response.close.assert_called_once()

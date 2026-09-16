@@ -850,3 +850,86 @@
     line-height: 1.6;
   }
 }
+
+/* Registration: benefits / centered brand / account form. */
+#app .register-container.register-layout {
+  max-width: 1640px;
+  width: 100%;
+  min-height: 100dvh;
+  grid-template-columns: minmax(240px, 0.85fr) minmax(280px, 1fr) minmax(340px, 1.05fr);
+  gap: clamp(24px, 3vw, 56px);
+  padding: 40px clamp(24px, 4vw, 72px);
+}
+#app .register-layout .register-features {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+#app .register-layout .benefits-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+#app .register-layout .benefit-item {
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+#app .register-layout .register-header {
+  text-align: center;
+}
+#app .register-layout .logo-section {
+  align-items: center;
+  text-align: center;
+}
+#app .register-layout .title h1 {
+  font-size: clamp(26px, 2.2vw, 36px);
+  line-height: 1.5;
+}
+#app .register-layout .register-content {
+  max-width: 480px;
+  margin: 0 auto;
+}
+#app .register-layout .login-link {
+  margin-bottom: 0;
+}
+.workspace-shell {
+  --chat-border-color: #7da6e4;
+}
+.dark .workspace-shell {
+  --chat-border-color: #365f99;
+}
+@media (max-width: 1100px) {
+  #app .register-container.register-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr);
+  }
+  #app .register-layout .register-header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  #app .register-layout .logo-section {
+    gap: 12px;
+  }
+  #app .register-layout .logo {
+    font-size: 48px;
+  }
+}
+@media (max-width: 700px) {
+  #app .register-container.register-layout {
+    display: flex;
+    flex-direction: column;
+    padding: 28px 18px;
+    gap: 28px;
+  }
+  #app .register-layout .register-header {
+    order: 0;
+  }
+  #app .register-layout .register-content {
+    order: 1;
+  }
+  #app .register-layout .register-features {
+    order: 2;
+    width: 100%;
+    max-width: 480px;
+  }
+}

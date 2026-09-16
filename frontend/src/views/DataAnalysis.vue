@@ -6,12 +6,7 @@
         <h1>数据分析</h1>
         <p>从原始数据到可解释的结果，探索每一个发现。</p>
       </div>
-      <button
-        class="primary-button"
-        @click="openUpload"
-      >
-        ＋ 上传数据
-      </button>
+      <button class="primary-button" @click="openUpload">＋ 上传数据</button>
     </header>
     <p v-if="pageError" class="error-banner" role="alert">{{ pageError }}</p>
     <div class="analysis-workspace">
@@ -136,6 +131,7 @@
           <div v-if="chartData" ref="chartContainer" class="chart-container" />
         </section>
         <ResearchConversation
+          streaming
           :key="selectedDataset.id"
           :endpoint="'/datasets/' + selectedDataset.id + '/agent/'"
           title="数据解读助手"
@@ -208,7 +204,13 @@ echarts.use([
   CanvasRenderer,
 ])
 
-const openUpload=()=>{showUpload.value=true;uploadError.value='';selectedFile.value=null;uploadName.value='';uploadDesc.value=''}
+const openUpload = () => {
+  showUpload.value = true
+  uploadError.value = ''
+  selectedFile.value = null
+  uploadName.value = ''
+  uploadDesc.value = ''
+}
 const datasets = ref([])
 const pageError = ref(''),
   listLoading = ref(false),

@@ -10,6 +10,24 @@ from .models import Document, DocumentChunk
 from .context import research_context
 
 class UploadTests(TestCase):
+    def test_real_pdf_parsing_and_chunk_creation(self):
+        from io import BytesIO
+        from PyPDF2 import PdfWriter
+        from PyPDF2.generic import DictionaryObject, NameObject, DecodedStreamObject
+        writer = PdfWriter()
+        writer.add_blank_page(width=300, height=300)
+        page = writer.pages[0]
+        font = DictionaryObject({NameObject('/Type'): NameObject('/Font'), NameObject('/Subtype'): NameObject('/Type1'), NameObject('/BaseFont'): NameObject('/Helvetica')})
+        page[NameObject('/Resources')] = DictionaryObject({NameObject('/Font'): DictionaryObject({NameObject('/F1'): writer._add_object(font)})})
+        stream = DecodedStreamObject()
+        stream.set_data(b'BT /F1 12 Tf 20 200 Td (Research evidence and experimental methods.) Tj ET')
+        page[NameObject('/Contents')] = writer._add_object(stream)
+        output = BytesIO()
+        writer.write(output)
+        response = self.client.post('/documents/upload/', {'file': SimpleUploadedFile('actual.pdf', output.getvalue(), content_type='application/pdf')}, format='multipart')
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertIn('Research evidence', DocumentChunk.objects.get().content)
+
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)

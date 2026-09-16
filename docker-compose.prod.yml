@@ -44,6 +44,8 @@ services:
       DEBUG: "False"
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
       OLLAMA_BASE_URL: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - db
       - redis

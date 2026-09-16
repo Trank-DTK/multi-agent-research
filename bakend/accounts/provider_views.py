@@ -10,6 +10,7 @@ from .provider_service import encrypt_key, validate_base_url, build_llm
 
 
 class ProviderSerializer(serializers.ModelSerializer):
+    base_url = serializers.CharField(max_length=500, trim_whitespace=True)
     api_key = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=4096, trim_whitespace=True)
     has_api_key = serializers.SerializerMethodField()
     class Meta:

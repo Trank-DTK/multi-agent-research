@@ -69,6 +69,7 @@
         </div>
       </section>
       <ResearchConversation
+        streaming
         endpoint="/literature/chat/"
         title="文献问答"
         :subtitle="selectedIds.length ? '仅依据你选择的文献回答' : '先在左侧选择参考文献'"
@@ -127,7 +128,7 @@ import { ElMessageBox } from 'element-plus'
 import axios from '@/axios'
 import ResearchConversation from '@/components/ResearchConversation.vue'
 import { apiError } from '@/utils/apiError'
-defineOptions({name:'DocumentLibrary'})
+defineOptions({ name: 'DocumentLibrary' })
 const documents = ref([]),
   selectedIds = ref([]),
   search = ref(''),

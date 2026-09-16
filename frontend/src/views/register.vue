@@ -1,5 +1,38 @@
 <template>
-  <div class="register-container">
+  <div class="register-container register-layout">
+    <div class="register-features">
+      <h3>注册后您将获得</h3>
+      <div class="benefits-grid">
+        <div class="benefit-item">
+          <span class="benefit-icon">🚀</span>
+          <div class="benefit-content">
+            <h4>智能科研助手</h4>
+            <p>AI驱动的文献调研、数据分析工具</p>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">🔬</span>
+          <div class="benefit-content">
+            <h4>多智能体协作</h4>
+            <p>文献助手、实验助手协同工作</p>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">📈</span>
+          <div class="benefit-content">
+            <h4>数据可视化</h4>
+            <p>专业的数据分析和图表生成</p>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">✍️</span>
+          <div class="benefit-content">
+            <h4>论文写作支持</h4>
+            <p>AI辅助的论文撰写和编辑</p>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="register-header">
       <div class="logo-section">
         <div class="logo">🔬</div>
@@ -70,40 +103,6 @@
       </div>
 
       <router-link to="/login" class="login-link">已有账号？去登录</router-link>
-
-      <div class="register-features">
-        <h3>注册后您将获得</h3>
-        <div class="benefits-grid">
-          <div class="benefit-item">
-            <span class="benefit-icon">🚀</span>
-            <div class="benefit-content">
-              <h4>智能科研助手</h4>
-              <p>AI驱动的文献调研、数据分析工具</p>
-            </div>
-          </div>
-          <div class="benefit-item">
-            <span class="benefit-icon">🔬</span>
-            <div class="benefit-content">
-              <h4>多智能体协作</h4>
-              <p>文献助手、实验助手协同工作</p>
-            </div>
-          </div>
-          <div class="benefit-item">
-            <span class="benefit-icon">📈</span>
-            <div class="benefit-content">
-              <h4>数据可视化</h4>
-              <p>专业的数据分析和图表生成</p>
-            </div>
-          </div>
-          <div class="benefit-item">
-            <span class="benefit-icon">✍️</span>
-            <div class="benefit-content">
-              <h4>论文写作支持</h4>
-              <p>AI辅助的论文撰写和编辑</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -113,6 +112,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '../axios'
 
+defineOptions({ name: 'RegisterPage' })
 const router = useRouter()
 
 // 表单数据
