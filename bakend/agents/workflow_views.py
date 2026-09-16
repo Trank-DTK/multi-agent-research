@@ -1,3 +1,4 @@
+from accounts.provider_service import build_llm
 # 工作流API
 import asyncio
 from django.http import JsonResponse
@@ -21,11 +22,7 @@ class WorkflowExecuteView(APIView):
             return JsonResponse({'error': '研究问题不能为空'}, status=400)
         
         # 创建临时Agent（简化版）
-        llm = Ollama(
-            model="qwen2.5:7b",
-            base_url=get_ollama_base_url(),
-            temperature=0.7
-        )
+        llm = build_llm(request.user)
         
         class SimpleAgent:
             def __init__(self, llm):

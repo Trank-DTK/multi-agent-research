@@ -27,9 +27,9 @@
 |------|--------|
 | 前端 | Vue3 + Vite + Element Plus + ECharts |
 | 后端 | Django + Django REST Framework |
-| AI框架 | LangChain + LangChain Classic |
-| LLM | Ollama (qwen2.5:7b) |
-| 数据库 | PostgreSQL + pgvector（向量检索） |
+| AI框架 | LangChain |
+| LLM | 支持API以及本地部署 |
+| 数据库 | PostgreSQL + pgvector |
 | 缓存 | Redis |
 | 部署 | Docker + Nginx + Gunicorn |
 
@@ -39,9 +39,8 @@
 ### 环境要求
 
 - **操作系统**：Windows 10+ / macOS 11+ / Linux
-- **内存**：8GB以上（推荐16GB）
 - **硬盘**：20GB可用空间
-- **软件**：Docker & Docker Compose、Ollama
+- **软件**：Docker & Docker Compose
 
 ### 一键部署
 
@@ -61,26 +60,26 @@ ollama pull qwen2.5:7b
 docker-compose -f docker-compose.prod.yml up -d
 
 # 5. 访问系统
-# 打开浏览器访问 http://localhost
+# 打开浏览器访问 http://localhost:80
 ```
 
 
 ## 开发环境运行
 
 ```bash
-# 后端
+#后端
 cd bakend
 conda create -n multi_agent python=3.11
 conda activate multi_agent
 pip install -r requirements.txt
 python manage.py runserver
 
-# 前端
+#前端
 cd frontend
 npm install
 npm run dev
 
-# 数据库（使用Docker）
+#数据库（使用Docker）
 docker-compose up db redis
 ```
 

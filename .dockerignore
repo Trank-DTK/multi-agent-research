@@ -1,0 +1,14 @@
+.git
+.test-deps
+.env
+**/.env
+**/.env.*
+**/__pycache__
+**/*.pyc
+**/*.log
+**/node_modules
+frontend/dist
+bakend/media
+bakend/static
+bakend/logs
+**/*.sqlite3

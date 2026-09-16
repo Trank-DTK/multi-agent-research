@@ -17,7 +17,7 @@ class FeedbackOrchestrator(TaskOrchestrator):
         """懒加载CriticService,避免循环导入"""
         if self._critic is None:
             from .critic_agent import CriticService
-            self._critic = CriticService()
+            self._critic = CriticService(self.user)
         return self._critic
     
     def execute_research_task_with_feedback(self, question: str, conversation=None) -> Dict:

@@ -1,15 +1,11 @@
 <template>
-  <div :class="{ dark: isDark }">
-    <router-view />
+  <div :class="{ 'workspace-shell': $route.meta.requiresAuth }">
+    <ResponsiveNav v-if="$route.meta.requiresAuth" />
+    <div class="route-content"><router-view /></div>
     <GlobalNotification />
   </div>
 </template>
-
 <script setup>
-import { computed } from 'vue'
-import { useThemeStore } from './stores/theme'
+import ResponsiveNav from './components/ResponsiveNav.vue'
 import GlobalNotification from './components/GlobalNotification.vue'
-
-const themeStore = useThemeStore()
-const isDark = computed(() => themeStore.isDark)
 </script>

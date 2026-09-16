@@ -10,7 +10,7 @@ from agents.writing_agent import WritingService
 from docx import Document
 from io import BytesIO
 
-writing_service = WritingService()
+
 
 
 class GenerateOutlineView(APIView):
@@ -25,7 +25,7 @@ class GenerateOutlineView(APIView):
             return JsonResponse({'error': '主题不能为空'}, status=400)
         
         try:
-            outline = writing_service.generate_outline(topic, paper_type)
+            outline = WritingService(request.user).generate_outline(topic, paper_type)
             return JsonResponse({'outline': outline})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
@@ -51,7 +51,7 @@ class PaperCreateView(APIView):
         
         # 生成大纲
         if topic:
-            outline = writing_service.generate_outline(topic)
+            outline = WritingService(request.user).generate_outline(topic)
             # 解析大纲创建章节
             paper.outline = outline
             paper.save()
@@ -156,7 +156,8 @@ class WriteSectionView(APIView):
             return JsonResponse({'error': '章节标题不能为空'}, status=400)
         
         try:
-            content = writing_service.write_section(section_title, context, word_count)
+            paper = Paper.objects.get(id=paper_id, user=request.user)
+            content = WritingService(request.user).write_section(section_title, context, word_count) if request.data.get('generate', True) else ''
             
             # 保存章节
             paper = Paper.objects.get(id=paper_id, user=request.user)
@@ -191,7 +192,7 @@ class PolishTextView(APIView):
             return JsonResponse({'error': '文本不能为空'}, status=400)
         
         try:
-            polished = writing_service.polish_text(text, style)
+            polished = WritingService(request.user).polish_text(text, style)
             return JsonResponse({'polished': polished})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
@@ -209,7 +210,7 @@ class GenerateAbstractView(APIView):
             if not content:
                 return JsonResponse({'error': '论文内容为空'}, status=400)
             
-            abstract = writing_service.generate_abstract(content)
+            abstract = WritingService(request.user).generate_abstract(content)
             
             # 保存摘要
             paper.abstract = abstract
@@ -283,7 +284,7 @@ class WritingAgentChatView(APIView):
             return JsonResponse({'error': '消息不能为空'}, status=400)
         
         try:
-            response = writing_service.agent.run(message)
+            response = WritingService(request.user).agent.run(message)
             return JsonResponse({'response': response})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)

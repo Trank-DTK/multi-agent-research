@@ -19,8 +19,9 @@ class PerformanceMonitor {
 
     const loadTime = navigationEntry.loadEventEnd - navigationEntry.startTime
     const domReadyTime = navigationEntry.domContentLoadedEventEnd - navigationEntry.startTime
-    const firstPaint = performance.getEntriesByType('paint')
-      .find(entry => entry.name === 'first-paint')?.startTime
+    const firstPaint = performance
+      .getEntriesByType('paint')
+      .find((entry) => entry.name === 'first-paint')?.startTime
 
     this.logMetric('page_load', loadTime)
     this.logMetric('dom_ready', domReadyTime)
@@ -34,7 +35,6 @@ class PerformanceMonitor {
     // 慢请求告警
     if (duration > 3000) {
       console.warn(`慢请求: ${url} - ${duration}ms`)
-      window.notify?.(`请求 ${url} 响应较慢 (${duration}ms)`, 'warning', 5000)
     }
   }
 
@@ -53,7 +53,7 @@ class PerformanceMonitor {
       name,
       value,
       tags,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
 
     this.metrics.push(metric)
@@ -80,7 +80,7 @@ class PerformanceMonitor {
       timestamp: Date.now(),
       metrics: this.metrics,
       userAgent: navigator.userAgent,
-      viewport: `${window.innerWidth}x${window.innerHeight}`
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
     }
 
     console.log('性能报告:', report)

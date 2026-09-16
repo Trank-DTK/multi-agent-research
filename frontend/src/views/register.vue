@@ -1,5 +1,38 @@
 <template>
-  <div class="register-container">
+  <div class="register-container register-layout">
+    <div class="register-features">
+      <h3>注册后您将获得</h3>
+      <div class="benefits-grid">
+        <div class="benefit-item">
+          <span class="benefit-icon">🚀</span>
+          <div class="benefit-content">
+            <h4>智能科研助手</h4>
+            <p>AI驱动的文献调研、数据分析工具</p>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">🔬</span>
+          <div class="benefit-content">
+            <h4>多智能体协作</h4>
+            <p>文献助手、实验助手协同工作</p>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">📈</span>
+          <div class="benefit-content">
+            <h4>数据可视化</h4>
+            <p>专业的数据分析和图表生成</p>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <span class="benefit-icon">✍️</span>
+          <div class="benefit-content">
+            <h4>论文写作支持</h4>
+            <p>AI辅助的论文撰写和编辑</p>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="register-header">
       <div class="logo-section">
         <div class="logo">🔬</div>
@@ -14,108 +47,62 @@
       <h2>用户注册</h2>
       <p class="form-description">创建账号，开启智能科研之旅</p>
       <form @submit.prevent="handleRegister">
-      <div class="form-group">
-        <input 
-          v-model="username" 
-          type="text" 
-          placeholder="用户名" 
-          required
-        />
-      </div>
-      
-      <div class="form-group">
-        <input 
-          v-model="email" 
-          type="email" 
-          placeholder="邮箱" 
-          required
-        />
-      </div>
-      
-      <div class="form-group">
-        <input 
-          v-model="password" 
-          type="password" 
-          placeholder="密码" 
-          required
-        />
-      </div>
-      
-      <div class="form-group">
-        <input 
-          v-model="password2" 
-          type="password" 
-          placeholder="确认密码" 
-          required
-        />
-      </div>
-      
-      <div class="form-row">
-        <div class="form-group half">
-          <input 
-            v-model="firstName" 
-            type="text" 
-            placeholder="姓（可选）"
-          />
+        <div class="form-group">
+          <input v-model="username" type="text" placeholder="用户名" aria-label="用户名" required />
         </div>
-        
-        <div class="form-group half">
-          <input 
-            v-model="lastName" 
-            type="text" 
-            placeholder="名（可选）"
-          />
-        </div>
-      </div>
-      
-      <button type="submit" :disabled="loading">
-        {{ loading ? '注册中...' : '注册' }}
-      </button>
-    </form>
-    
-    <div v-if="error" class="error">
-      <p v-for="(msg, index) in errorMessages" :key="index">{{ msg }}</p>
-    </div>
-    
-    <div v-if="success" class="success">
-      {{ success }}
-    </div>
-    
-      <router-link to="/login" class="login-link">已有账号？去登录</router-link>
 
-      <div class="register-features">
-        <h3>注册后您将获得</h3>
-        <div class="benefits-grid">
-          <div class="benefit-item">
-            <span class="benefit-icon">🚀</span>
-            <div class="benefit-content">
-              <h4>智能科研助手</h4>
-              <p>AI驱动的文献调研、数据分析工具</p>
-            </div>
+        <div class="form-group">
+          <input v-model="email" type="email" placeholder="邮箱" aria-label="邮箱" required />
+        </div>
+
+        <div class="form-group">
+          <input v-model="password" type="password" placeholder="密码" aria-label="密码" required />
+        </div>
+
+        <div class="form-group">
+          <input
+            v-model="password2"
+            type="password"
+            placeholder="确认密码"
+            aria-label="确认密码"
+            required
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <input
+              v-model="firstName"
+              type="text"
+              placeholder="姓（可选）"
+              aria-label="姓（可选）"
+            />
           </div>
-          <div class="benefit-item">
-            <span class="benefit-icon">🔬</span>
-            <div class="benefit-content">
-              <h4>多智能体协作</h4>
-              <p>文献助手、实验助手协同工作</p>
-            </div>
-          </div>
-          <div class="benefit-item">
-            <span class="benefit-icon">📈</span>
-            <div class="benefit-content">
-              <h4>数据可视化</h4>
-              <p>专业的数据分析和图表生成</p>
-            </div>
-          </div>
-          <div class="benefit-item">
-            <span class="benefit-icon">✍️</span>
-            <div class="benefit-content">
-              <h4>论文写作支持</h4>
-              <p>AI辅助的论文撰写和编辑</p>
-            </div>
+
+          <div class="form-group half">
+            <input
+              v-model="lastName"
+              type="text"
+              placeholder="名（可选）"
+              aria-label="名（可选）"
+            />
           </div>
         </div>
+
+        <button type="submit" :disabled="loading">
+          {{ loading ? '注册中...' : '注册' }}
+        </button>
+      </form>
+
+      <div v-if="error" class="error">
+        <p v-for="(msg, index) in errorMessages" :key="index">{{ msg }}</p>
       </div>
+
+      <div v-if="success" class="success">
+        {{ success }}
+      </div>
+
+      <router-link to="/login" class="login-link">已有账号？去登录</router-link>
     </div>
   </div>
 </template>
@@ -125,6 +112,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '../axios'
 
+defineOptions({ name: 'RegisterPage' })
 const router = useRouter()
 
 // 表单数据
@@ -153,16 +141,16 @@ const handleRegister = async () => {
     error.value = { password: '两次输入的密码不一致' }
     return
   }
-  
+
   if (password.value.length < 6) {
     error.value = { password: '密码长度至少6位' }
     return
   }
-  
+
   loading.value = true
   error.value = null
   success.value = ''
-  
+
   try {
     await axios.post('/auth/register/', {
       username: username.value,
@@ -170,7 +158,7 @@ const handleRegister = async () => {
       password: password.value,
       password2: password2.value,
       first_name: firstName.value,
-      last_name: lastName.value
+      last_name: lastName.value,
     })
 
     success.value = '注册成功！2秒后跳转到登录页...'
@@ -179,7 +167,6 @@ const handleRegister = async () => {
     setTimeout(() => {
       router.push('/login')
     }, 2000)
-
   } catch (err) {
     if (err.response && err.response.data) {
       error.value = err.response.data

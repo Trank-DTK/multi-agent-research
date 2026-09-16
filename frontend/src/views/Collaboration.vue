@@ -1,340 +1,188 @@
 <template>
-  <div class="collaboration-page">
-    <div class="page-header">
-      <button class="back-btn" @click="$router.push('/dashboard')">
-        <span class="btn-icon">←</span>
-        <span class="btn-text">返回主页</span>
-      </button>
-      <div class="header-content">
-        <h2>🤝 多智能体协作研究</h2>
-        <p>文献助手 + 实验助手 协同工作，完成完整的研究流程</p>
+  <main class="collaboration-page modern-page">
+    <header class="section-title">
+      <div>
+        <p class="eyebrow">COLLABORATIVE RESEARCH</p>
+        <h1>协作研究</h1>
+        <p>从文献证据到研究方案，在一个空间完成协作与评审。</p>
+      </div>
+      <span class="badge">多角色协作</span>
+    </header>
+    <div class="research-steps">
+      <div v-for="(step, i) in steps" :key="step">
+        <span>0{{ i + 1 }}</span
+        ><strong>{{ step }}</strong>
       </div>
     </div>
-    
-    <div class="input-section">
-      <textarea 
-        v-model="researchQuestion" 
-        placeholder="输入你的研究问题，例如：如何提高深度学习模型在图像分类任务中的准确率？"
-        rows="3"
-      ></textarea>
-      <button @click="startResearch" :disabled="loading || !researchQuestion">
-        {{ loading ? '研究中...' : '开始研究' }}
-      </button>
-    </div>
-    
-    <!-- 结果显示区域 -->
-    <div v-if="result" class="result-section">
-      <div class="result-tabs">
-        <button :class="{ active: activeTab === 'report' }" @click="activeTab = 'report'">
-          📄 研究报告
+    <section class="panel research-brief">
+      <h2>这次想研究什么？</h2>
+      <p>描述你的问题、预期目标与研究约束。</p>
+      <textarea
+        v-model="question"
+        rows="5"
+        aria-label="研究问题"
+        placeholder="例如：如何提高小样本条件下图像分类模型的准确率？请比较可行方法，并设计对照实验。"
+        :disabled="loading"
+      />
+      <div class="research-options">
+        <el-select
+          v-model="selectedIds"
+          multiple
+          collapse-tags
+          collapse-tags-tooltip
+          placeholder="从文献库添加参考资料"
+          :disabled="loading || documentsLoading"
+          style="min-width: 240px; flex: 1"
+          ><el-option
+            v-for="doc in documents"
+            :key="doc.id"
+            :value="doc.id"
+            :label="doc.title" /></el-select
+        ><label class="check-label"
+          ><input
+            v-model="withReview"
+            type="checkbox"
+            :disabled="loading"
+          />完成后进行研究评审</label
+        >
+      </div>
+      <p v-if="documentError" class="error-banner">
+        {{ documentError }} <button class="text-button" @click="loadDocuments">重试</button>
+      </p>
+      <div class="brief-actions">
+        <span>{{
+          selectedIds.length
+            ? '已添加 ' + selectedIds.length + ' 篇参考文献'
+            : '可选：添加资料，让方案更贴近你的研究'
+        }}</span
+        ><button class="primary-button" :disabled="loading || !question.trim()" @click="start">
+          {{ loading ? '正在协作研究…' : '开始研究 →' }}
         </button>
-        <button :class="{ active: activeTab === 'literature' }" @click="activeTab = 'literature'">
-          📚 文献调研
+      </div>
+    </section>
+    <p v-if="error" class="error-banner" role="alert">{{ error }}</p>
+    <section v-if="loading" class="panel thinking" role="status">
+      <el-icon class="is-loading"><Loading /></el-icon> 正在依次完成文献分析、实验设计与报告整合{{
+        withReview ? '，随后进行评审' : ''
+      }}，请稍候。
+    </section>
+    <section v-if="result" class="panel research-result">
+      <div class="section-title">
+        <h2>研究成果</h2>
+        <button class="secondary-button" @click="download">下载报告</button>
+      </div>
+      <div class="segmented">
+        <button
+          v-for="item in resultTabs"
+          :key="item.id"
+          :class="{ active: activeTab === item.id }"
+          @click="activeTab = item.id"
+        >
+          {{ item.name }}
         </button>
-        <button :class="{ active: activeTab === 'experiment' }" @click="activeTab = 'experiment'">
-          🔬 实验设计
-        </button>
       </div>
-      
-      <div class="result-content">
-        <div v-if="activeTab === 'report'" class="report">
-          <h3>研究方案报告</h3>
-          <div class="markdown-content" v-html="formatContent(result.response)"></div>
-        </div>
-        
-        <div v-if="activeTab === 'literature'" class="literature">
-          <h3>文献调研结果</h3>
-          <div class="markdown-content" v-html="formatContent(result.results?.literature_review || '无')"></div>
-        </div>
-        
-        <div v-if="activeTab === 'experiment'" class="experiment">
-          <h3>实验设计方案</h3>
-          <div class="markdown-content" v-html="formatContent(result.results?.experiment_design || '无')"></div>
-        </div>
+      <div class="report-text">{{ resultText }}</div>
+    </section>
+    <section v-else-if="!loading" class="research-guide">
+      <div>
+        <el-icon><Reading /></el-icon>
+        <h3>文献分析</h3>
+        <p>整理所选资料中的研究证据与空白。</p>
       </div>
-    </div>
-    
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <p>智能体正在协同工作...</p>
-      <div class="agent-status">
-        <div class="status-item">
-          <span class="dot literature"></span>
-          <span>文献助手：{{ literatureStatus }}</span>
-        </div>
-        <div class="status-item">
-          <span class="dot experiment"></span>
-          <span>实验助手：{{ experimentStatus }}</span>
-        </div>
+      <div>
+        <el-icon><Aim /></el-icon>
+        <h3>实验设计</h3>
+        <p>明确假设、变量、对照和评估指标。</p>
       </div>
-    </div>
-  </div>
+      <div>
+        <el-icon><CircleCheck /></el-icon>
+        <h3>研究评审</h3>
+        <p>按需检查方案并提出具体改进建议。</p>
+      </div>
+    </section>
+  </main>
 </template>
-
 <script setup>
-import { ref } from 'vue'
-import axios from '../axios'
-
-const researchQuestion = ref('')
-const loading = ref(false)
-const result = ref(null)
-const activeTab = ref('report')
-const literatureStatus = ref('等待中')
-const experimentStatus = ref('等待中')
-
-const escapeHtml = (text) => {
-  if (!text) return ''
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
-
-const formatContent = (content) => {
-  if (!content) return ''
-
-  // 先转义HTML特殊字符
-  let formatted = escapeHtml(content)
-
-  // 处理标题
-  formatted = formatted.replace(/^### (.*?)$/gm, '<h3>$1</h3>')
-  formatted = formatted.replace(/^## (.*?)$/gm, '<h2>$1</h2>')
-  formatted = formatted.replace(/^# (.*?)$/gm, '<h1>$1</h1>')
-
-  // 处理无序列表
-  formatted = formatted.replace(/^\s*[-*+] (.*?)$/gm, '<li>$1</li>')
-
-  // 处理有序列表
-  formatted = formatted.replace(/^\s*\d+\. (.*?)$/gm, '<li>$1</li>')
-
-  // 如果有列表项，包裹在ul或ol中（简化处理）
-  if (formatted.includes('<li>')) {
-    formatted = formatted.replace(/<li>(.*?)<\/li>/g, '<ul><li>$1</li></ul>')
-    // 合并相邻的ul标签
-    formatted = formatted.replace(/<\/ul>\s*<ul>/g, '')
-  }
-
-  // 处理粗体
-  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-
-  // 处理斜体
-  formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>')
-
-  // 处理换行：两个以上换行符作为段落分隔，单个换行作为<br>
-  formatted = formatted.replace(/\n\s*\n/g, '</p><p>')
-  formatted = formatted.replace(/\n/g, '<br>')
-
-  // 包裹在段落中
-  if (!formatted.startsWith('<h') && !formatted.startsWith('<ul') && !formatted.startsWith('<li')) {
-    formatted = '<p>' + formatted + '</p>'
-  }
-
-  return formatted
-}
-
-const startResearch = async () => {
-  if (!researchQuestion.value.trim()) return
-  
-  loading.value = true
-  result.value = null
-  literatureStatus.value = '调研中...'
-  experimentStatus.value = '等待中'
-  
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import axios from '@/axios'
+import { apiError } from '@/utils/apiError'
+defineOptions({ name: 'ResearchCollaboration' })
+const route = useRoute(),
+  question = ref(''),
+  selectedIds = ref([]),
+  documents = ref([]),
+  documentsLoading = ref(false),
+  documentError = ref(''),
+  withReview = ref(route.query.review === '1'),
+  loading = ref(false),
+  error = ref(''),
+  result = ref(null),
+  activeTab = ref('report')
+const steps = computed(() =>
+  withReview.value
+    ? ['文献分析', '实验设计', '报告整合', '研究评审']
+    : ['文献分析', '实验设计', '报告整合'],
+)
+const resultTabs = computed(() => [
+  { id: 'report', name: '研究报告' },
+  { id: 'literature', name: '文献分析' },
+  { id: 'experiment', name: '实验设计' },
+  ...(result.value?.review ? [{ id: 'review', name: '评审意见' }] : []),
+])
+const resultText = computed(
+  () =>
+    ({
+      report: result.value?.response,
+      literature: result.value?.results?.literature_review,
+      experiment: result.value?.results?.experiment_design,
+      review: result.value?.review,
+    })[activeTab.value],
+)
+async function loadDocuments() {
+  documentsLoading.value = true
+  documentError.value = ''
   try {
-    const response = await axios.post('/collaboration/research/', {
-      question: researchQuestion.value
-    })
-    
-    result.value = response.data
-    
-    // 更新状态
-    if (response.data.results?.literature_review) {
-      literatureStatus.value = '完成 ✓'
-    }
-    if (response.data.results?.experiment_design) {
-      experimentStatus.value = '完成 ✓'
-    }
-    
-  } catch (error) {
-    console.error('协作研究失败:', error)
-    alert(error.response?.data?.error || '研究失败，请稍后重试')
+    documents.value = (await axios.get('/documents/')).data
+  } catch (e) {
+    documentError.value = apiError(e, '参考文献加载失败')
+  } finally {
+    documentsLoading.value = false
+  }
+}
+async function start() {
+  if (loading.value || !question.value.trim()) return
+  loading.value = true
+  error.value = ''
+  result.value = null
+  try {
+    result.value = (
+      await axios.post(
+        '/collaboration/research/',
+        {
+          question: question.value,
+          document_ids: selectedIds.value,
+          with_review: withReview.value,
+        },
+        { timeout: 600000 },
+      )
+    ).data
+    activeTab.value = 'report'
+  } catch (e) {
+    error.value = apiError(e)
   } finally {
     loading.value = false
   }
 }
+function download() {
+  const text =
+    result.value.response + (result.value.review ? '\n\n## 评审意见\n' + result.value.review : '')
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = '研究报告.md'
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+onMounted(loadDocuments)
 </script>
-
-<style scoped>
-.collaboration-page {
-  max-width: 1000px;
-  margin: 30px auto;
-  padding: 0 20px;
-}
-
-.page-header {
-  position: relative;
-  margin-bottom: 40px;
-}
-
-.back-btn {
-  position: absolute;
-  top: 0;
-  left: 0;
-  padding: 10px 16px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  z-index: 10;
-}
-
-.back-btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--success-color);
-  transform: translateX(-4px);
-}
-
-.btn-icon {
-  font-size: 16px;
-}
-
-.header-content {
-  text-align: center;
-}
-
-.header-content h2 {
-  color: #1890ff;
-  margin-bottom: 10px;
-}
-
-.input-section {
-  margin-bottom: 30px;
-}
-
-textarea {
-  width: 100%;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px;
-  resize: vertical;
-  font-family: inherit;
-  margin-bottom: 15px;
-}
-
-button {
-  padding: 12px 30px;
-  background-color: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.result-section {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: white;
-}
-
-.result-tabs {
-  display: flex;
-  border-bottom: 1px solid #e0e0e0;
-  background-color: #f5f5f5;
-}
-
-.result-tabs button {
-  flex: 1;
-  background: none;
-  color: #666;
-  padding: 12px;
-  border-radius: 0;
-  background-color: transparent;
-}
-
-.result-tabs button.active {
-  color: #1890ff;
-  border-bottom: 2px solid #1890ff;
-  background-color: white;
-}
-
-.result-content {
-  padding: 20px;
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-.markdown-content {
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.loading {
-  text-align: center;
-  padding: 40px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  margin-top: 20px;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #1890ff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.agent-status {
-  display: flex;
-  justify-content: center;
-  gap: 30px;
-  margin-top: 20px;
-}
-
-.status-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.dot.literature {
-  background-color: #1890ff;
-}
-
-.dot.experiment {
-  background-color: #ff9800;
-}
-</style>

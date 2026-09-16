@@ -1,3 +1,4 @@
+from accounts.provider_service import build_llm
 # 写作助手
 from langchain_classic.agents import initialize_agent, AgentType
 from langchain_classic.memory import ConversationBufferMemory
@@ -9,14 +10,10 @@ from .writing_tools import (
 from .agent import get_ollama_base_url
 
 
-def create_writing_agent(verbose=True):
+def create_writing_agent(verbose=True, user=None):
     """创建论文写作Agent"""
     
-    llm = Ollama(
-        model="qwen2.5:7b",
-        base_url=get_ollama_base_url(),
-        temperature=0.7
-    )
+    llm = build_llm(user)
     
     tools = [
         GenerateOutlineTool(llm=llm),
@@ -43,14 +40,10 @@ def create_writing_agent(verbose=True):
 class WritingService:
     """论文写作服务"""
 
-    def __init__(self):
-        self.agent = create_writing_agent(verbose=False)
+    def __init__(self, user=None):
+        self.agent = create_writing_agent(verbose=False, user=user)
         # 创建独立的工具实例，避免agent路由错误
-        self.llm = Ollama(
-            model="qwen2.5:7b",
-            base_url=get_ollama_base_url(),
-            temperature=0.5
-        )
+        self.llm = build_llm(user)
         self.polish_tool = PolishTextTool(llm=self.llm)
     
     def generate_outline(self, topic: str, paper_type: str = "research") -> str:

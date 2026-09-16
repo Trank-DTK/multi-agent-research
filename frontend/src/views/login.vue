@@ -13,34 +13,34 @@
     <div class="login-content">
       <h2>用户登录</h2>
       <form @submit.prevent="handleLogin">
-      <div class="form-group">
-        <input 
-          v-model="username" 
-          type="text" 
-          placeholder="用户名" 
-          required
-          autocomplete="username"
-        />
-      </div>
-      
-      <div class="form-group">
-        <input 
-          v-model="password" 
-          type="password" 
-          placeholder="密码" 
-          required
-          autocomplete="current-password"
-        />
-      </div>
-      
-      <button type="submit" :disabled="loading">
-        {{ loading ? '登录中...' : '登录' }}
-      </button>
-    </form>
-    
-    <p v-if="error" class="error">{{ error }}</p>
-    
-      <p v-if="error" class="error">{{ error }}</p>
+        <div class="form-group">
+          <input
+            v-model="username"
+            type="text"
+            placeholder="用户名"
+            aria-label="用户名"
+            required
+            autocomplete="username"
+          />
+        </div>
+
+        <div class="form-group">
+          <input
+            v-model="password"
+            type="password"
+            placeholder="密码"
+            aria-label="密码"
+            required
+            autocomplete="current-password"
+          />
+        </div>
+
+        <button type="submit" :disabled="loading">
+          {{ loading ? '登录中...' : '登录' }}
+        </button>
+      </form>
+
+      <p v-if="error" class="error" role="alert">{{ error }}</p>
 
       <router-link to="/register" class="register-link">还没有账号？立即注册</router-link>
 
@@ -85,20 +85,20 @@ const handleLogin = async () => {
     error.value = '请输入用户名和密码'
     return
   }
-  
+
   loading.value = true
   error.value = ''
-  
+
   try {
     const response = await axios.post('/auth/login/', {
       username: username.value,
-      password: password.value
+      password: password.value,
     })
-    
+
     // 保存token
     localStorage.setItem('access', response.data.access)
     localStorage.setItem('refresh', response.data.refresh)
-    
+
     // 跳转到仪表盘
     router.push('/dashboard')
   } catch (err) {

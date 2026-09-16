@@ -1,63 +1,229 @@
-/* 全局CSS变量 */
+@import 'element-plus/theme-chalk/dark/css-vars.css';
 :root {
-  /* 亮色主题变量 */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --bg-tertiary: #f9f9f9;
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --text-tertiary: #999999;
-  --border-color: #e0e0e0;
-  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --header-bg: #1890ff;
-  --header-text: #ffffff;
-  --success-color: #1890ff;
-  --warning-color: #ff9800;
-  --error-color: #f44336;
-  --info-color: #2196f3;
+  --bg-primary: #f3f6fb;
+  --bg-secondary: #fff;
+  --bg-tertiary: #edf2fa;
+  --text-primary: #20314d;
+  --text-secondary: #64748b;
+  --text-tertiary: #8a99ad;
+  --border-color: #e1e7f0;
+  --card-shadow: 0 8px 24px #20477b10;
+  --header-bg: #245bb5;
+  --header-text: #fff;
+  --success-color: #326bd6;
+  --accent-soft: #e8f0ff;
+  --warning-color: #b97a25;
+  --error-color: #cb4d4d;
+  --info-color: #427aad;
+  --el-color-primary: #326bd6;
 }
-
 .dark {
-  /* 暗色主题变量 */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #2d2d2d;
-  --bg-tertiary: #252525;
-  --text-primary: #e0e0e0;
-  --text-secondary: #b0b0b0;
-  --text-tertiary: #808080;
-  --border-color: #404040;
-  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --header-bg: #1a3a5f;
-  --header-text: #e0e0e0;
+  color-scheme: dark;
+  --bg-primary: #101a2b;
+  --bg-secondary: #18253a;
+  --bg-tertiary: #22334d;
+  --text-primary: #e6edf8;
+  --text-secondary: #b2bfd3;
+  --text-tertiary: #8e9eb8;
+  --border-color: #32425d;
+  --card-shadow: 0 8px 24px #0003;
+  --header-bg: #245bb5;
+  --header-text: #fff;
+  --success-color: #83b3ff;
+  --accent-soft: #223d63;
+  --el-color-primary: #83b3ff;
 }
-
-/* 全局样式 */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  box-sizing: border-box;
 }
-
 body {
-  background-color: var(--bg-primary);
+  margin: 0;
+  background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'Microsoft YaHei',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
-
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
-
-::-webkit-scrollbar-track {
+button,
+a,
+input,
+textarea {
+  touch-action: manipulation;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--success-color);
+  outline-offset: 3px;
+}
+button {
+  cursor: pointer;
+}
+.workspace-shell > .route-content {
+  margin-left: 232px;
+  min-width: 0;
+}
+#app .workspace-shell .page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+#app .workspace-shell .page-header .back-btn {
+  position: static;
+}
+#app .workspace-shell .page-header .header-content {
+  text-align: left;
+}
+#app .workspace-shell .page-header h1 {
+  font-size: 28px;
+  margin: 0 0 10px;
+  background: none;
+  -webkit-text-fill-color: var(--text-primary);
+  color: var(--text-primary);
+}
+#app .workspace-shell .page-header .subtitle {
+  margin: 0;
+}
+.workspace-shell .route-content > [class$='-page'] {
+  width: 100%;
+  padding: 32px;
+  min-width: 0;
+}
+.workspace-shell .document-card,
+.workspace-shell .chat-container {
   background: var(--bg-secondary);
-  border-radius: 4px;
+  border-radius: 12px;
 }
-
+.workspace-shell .modal {
+  z-index: 200;
+}
+.workspace-shell input,
+.workspace-shell textarea,
+.workspace-shell select {
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+}
+#app .login-container,
+#app .register-container {
+  max-width: 1040px;
+  padding: 64px 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  background: transparent;
+}
+#app .login-header,
+#app .register-header {
+  margin: 0;
+  text-align: left;
+}
+#app .logo-section {
+  align-items: flex-start;
+  text-align: left;
+}
+#app .title h1 {
+  font-size: 36px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+#app .login-content,
+#app .register-content {
+  width: 100%;
+  padding: 32px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  box-shadow: var(--card-shadow);
+}
+#app .login-content h2,
+#app .register-content h2 {
+  text-align: left;
+  font-size: 24px;
+}
+#app .login-content input,
+#app .register-content input {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+#app .login-content button[type='submit'],
+#app .register-content button[type='submit'] {
+  background: #326bd6;
+}
+#app .login-features,
+#app .register-features {
+  margin-top: 28px;
+}
+#app .feature-item,
+#app .benefit-item {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
 ::-webkit-scrollbar-thumb {
-  background: var(--text-tertiary);
-  border-radius: 4px;
+  background: var(--border-color);
+  border-radius: 5px;
 }
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+@media (max-width: 1000px) {
+  .workspace-shell > .route-content {
+    margin-left: 0;
+  }
+}
+@media (max-width: 700px) {
+  #app .login-container,
+  #app .register-container {
+    display: flex;
+    padding: 30px 18px;
+    gap: 24px;
+  }
+  #app .login-header,
+  #app .register-header {
+    margin: 0;
+  }
+  #app .title h1 {
+    font-size: 25px;
+  }
+  #app .logo-section {
+    gap: 10px;
+  }
+  #app .login-content,
+  #app .register-content {
+    padding: 24px;
+  }
+  .workspace-shell .route-content > [class$='-page'] {
+    padding: 24px 16px;
+  }
+  #app .workspace-shell .page-header h1 {
+    font-size: 25px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

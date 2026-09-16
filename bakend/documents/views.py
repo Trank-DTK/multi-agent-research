@@ -22,45 +22,24 @@ class DocumentUploadView(APIView):
         uploaded_file = serializer.validated_data['file']
         title = serializer.validated_data.get('title', uploaded_file.name)
         
-        # 保存文件
-        file_path = default_storage.save(f'documents/{request.user.id}/{uploaded_file.name}', uploaded_file)
-        full_path = default_storage.path(file_path)
-        
+        from django.db import transaction
+        from .models import DocumentChunk
+        file_path = None
         try:
-            # 解析PDF
-            text, page_count = PDFParseService.extract_text_from_pdf(full_path)
-            
+            file_path = default_storage.save(f'documents/{request.user.id}/{uploaded_file.name}', uploaded_file)
+            text, page_count = PDFParseService.extract_text_from_pdf(default_storage.path(file_path))
             if not text.strip():
-                return JsonResponse({'error': 'PDF中没有提取到文本'}, status=400)
-            
-            # 创建文档记录
-            document = Document.objects.create(
-                user=request.user,
-                title=title,
-                file=file_path,
-                file_name=uploaded_file.name,
-                file_size=uploaded_file.size,
-                page_count=page_count
-            )
-            
-            # 文本分块
+                default_storage.delete(file_path)
+                return JsonResponse({'error': 'PDF 没有可提取的文本。扫描版请先进行 OCR 识别后再上传。'}, status=400)
             chunks = PDFParseService.split_text(text)
-            
-            # 生成向量并存储
-            vector_service = VectorService()
-            vector_service.create_chunks_with_vectors(document, chunks)
-            
-            return JsonResponse({
-                'message': '上传成功',
-                'document': DocumentSerializer(document).data,
-                'chunk_count': len(chunks)
-            })
-            
-        except Exception as e:
-            # 出错时删除已保存的文件
-            if os.path.exists(full_path):
-                os.remove(full_path)
-            return JsonResponse({'error': str(e)}, status=500)
+            with transaction.atomic():
+                document = Document.objects.create(user=request.user, title=title or uploaded_file.name, file=file_path, file_name=uploaded_file.name, file_size=uploaded_file.size, page_count=page_count)
+                DocumentChunk.objects.bulk_create([DocumentChunk(document=document, chunk_index=i, content=chunk) for i, chunk in enumerate(chunks)])
+            return JsonResponse({'message': '上传成功，文本已可用于检索与研究', 'document': DocumentSerializer(document).data, 'chunk_count': len(chunks)}, status=201)
+        except Exception:
+            if file_path:
+                default_storage.delete(file_path)
+            return JsonResponse({'error': '文献保存失败，请确认 PDF 未损坏，并检查数据库迁移和文件存储权限。'}, status=500)
 
 
 class DocumentListView(APIView):

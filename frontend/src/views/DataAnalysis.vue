@@ -1,148 +1,232 @@
-<!-- 数据集管理页面 -->
 <template>
-  <div class="data-analysis-page">
-    <div class="page-header">
-      <button class="back-btn" @click="$router.push('/dashboard')">
-        <span class="btn-icon">←</span>
-        <span class="btn-text">返回主页</span>
-      </button>
-      <div class="header-content">
-        <h2>数据分析</h2>
+  <main class="data-analysis-page modern-page">
+    <header class="section-title">
+      <div>
+        <p class="eyebrow">DATA EXPLORER</p>
+        <h1>数据分析</h1>
+        <p>从原始数据到可解释的结果，探索每一个发现。</p>
       </div>
-      <button @click="showUpload = true" class="upload-btn">+ 上传数据</button>
-    </div>
-    
-    <!-- 上传弹窗 -->
-    <div v-if="showUpload" class="modal">
-      <div class="modal-content">
-        <h3>上传数据文件</h3>
-        <p class="hint">支持 CSV、Excel (.xlsx, .xls)</p>
-        <input type="file" accept=".csv,.xlsx,.xls" @change="onFileSelected" ref="fileInput" />
-        <input v-model="uploadName" placeholder="数据集名称（可选）" />
-        <textarea v-model="uploadDesc" placeholder="描述（可选）" rows="2"></textarea>
-        <div class="modal-buttons">
-          <button @click="uploadFile" :disabled="uploading">{{ uploading ? '上传中...' : '确认上传' }}</button>
-          <button @click="showUpload = false">取消</button>
+      <button class="primary-button" @click="openUpload">＋ 上传数据</button>
+    </header>
+    <p v-if="pageError" class="error-banner" role="alert">{{ pageError }}</p>
+    <div class="analysis-workspace">
+      <aside class="panel dataset-rail">
+        <div class="panel-heading">
+          <h2>
+            数据集 <span class="count-badge">{{ datasets.length }}</span>
+          </h2>
+          <button class="text-button" :disabled="listLoading" @click="fetchDatasets">刷新</button>
         </div>
-        <p v-if="uploadError" class="error">{{ uploadError }}</p>
-      </div>
-    </div>
-    
-    <!-- 数据集列表 -->
-    <div class="dataset-list">
-      <div v-for="ds in datasets" :key="ds.id" class="dataset-card" @click="selectDataset(ds)">
-        <h3>{{ ds.name }}</h3>
-        <p>{{ ds.row_count }} 行 × {{ ds.column_count }} 列</p>
-        <p class="time">{{ formatDate(ds.uploaded_at) }}</p>
-      </div>
-      <div v-if="datasets.length === 0" class="empty">
-        暂无数据集，点击上方按钮上传
-      </div>
-    </div>
-    
-    <!-- 数据分析详情 -->
-    <div v-if="selectedDataset" class="analysis-detail">
-      <div class="detail-header">
-        <h3>{{ selectedDataset.name }}</h3>
-        <button @click="selectedDataset = null" class="close-btn">×</button>
-      </div>
-      
-      <!-- 数据预览 -->
-      <div class="data-preview">
-        <h4>数据预览</h4>
-        <div class="preview-table">
-          <table>
-            <thead>
-              <tr>
-                <th v-for="col in previewColumns" :key="col">{{ col }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(row, idx) in previewData" :key="idx">
-                <td v-for="col in previewColumns" :key="col">{{ row[col] }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      
-      <!-- 统计摘要 -->
-      <div class="statistics">
-        <h4>统计摘要</h4>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <span class="stat-label">行数</span>
-            <span class="stat-value">{{ selectedDataset.row_count }}</span>
+        <input
+          v-model="search"
+          class="full-search"
+          type="search"
+          aria-label="搜索数据集"
+          placeholder="搜索数据集"
+        />
+        <p v-if="listLoading" class="empty-state">正在加载…</p>
+        <button
+          v-for="ds in filteredDatasets"
+          :key="ds.id"
+          class="dataset-choice"
+          :class="{ active: selectedDataset?.id === ds.id }"
+          :disabled="busy"
+          @click="selectDataset(ds)"
+        >
+          <strong>{{ ds.name }}</strong
+          ><small>{{ ds.row_count }} 行 × {{ ds.column_count }} 列</small
+          ><small>{{ formatDate(ds.uploaded_at) }}</small>
+        </button>
+        <p v-if="!listLoading && !filteredDatasets.length" class="empty-state">
+          {{ datasets.length ? '没有匹配的数据集' : '还没有数据集，上传文件开始分析。' }}
+        </p>
+      </aside>
+      <div v-if="selectedDataset" class="analysis-canvas">
+        <div class="analysis-stats">
+          <div class="metric-card">
+            <small>数据行数</small><strong>{{ selectedDataset.row_count }}</strong>
           </div>
-          <div class="stat-card">
-            <span class="stat-label">列数</span>
-            <span class="stat-value">{{ selectedDataset.column_count }}</span>
+          <div class="metric-card">
+            <small>字段数量</small><strong>{{ selectedDataset.column_count }}</strong>
           </div>
-          <div class="stat-card">
-            <span class="stat-label">内存</span>
-            <span class="stat-value">{{ formatFileSize(selectedDataset.file_size) }}</span>
+          <div class="metric-card">
+            <small>文件大小</small><strong>{{ formatFileSize(selectedDataset.file_size) }}</strong>
           </div>
         </div>
-      </div>
-      
-      <!-- 分析操作 -->
-      <div class="analysis-actions">
-        <button @click="runAnalysis('descriptive')" :disabled="analyzing">描述性统计</button>
-        <button @click="runAnalysis('correlation')" :disabled="analyzing">相关性分析</button>
-      </div>
-      
-      <!-- 分析结果 -->
-      <div v-if="analysisResult" class="analysis-result">
-        <h4>分析结果</h4>
-        <div class="insight">{{ analysisResult.insight }}</div>
-        <pre class="result-data">{{ JSON.stringify(analysisResult.result, null, 2) }}</pre>
-      </div>
-      
-      <!-- 可视化 -->
-      <div class="visualization">
-        <h4>数据可视化</h4>
-        <div class="viz-controls">
-          <select v-model="vizConfig.chartType">
-            <option value="bar">柱状图</option>
-            <option value="line">折线图</option>
-            <option value="scatter">散点图</option>
-            <option value="histogram">直方图</option>
-          </select>
-          <select v-model="vizConfig.xColumn">
-            <option v-for="col in columns" :key="col" :value="col">{{ col }}</option>
-          </select>
-          <select v-model="vizConfig.yColumn">
-            <option value="">无</option>
-            <option v-for="col in columns" :key="col" :value="col">{{ col }}</option>
-          </select>
-          <button @click="generateChart" :disabled="generatingChart">生成图表</button>
-        </div>
-        <div v-if="chartData" class="chart-container" ref="chartContainer"></div>
-      </div>
-      
-      <!-- AI 对话 -->
-      <div class="ai-chat">
-        <h4>数据分析助手</h4>
-        <div class="chat-messages">
-          <div v-for="(msg, idx) in chatMessages" :key="idx" :class="['message', msg.role]">
-            {{ msg.content }}
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <h2>{{ selectedDataset.name }}</h2>
+              <p>数据预览 · 前 20 行</p>
+            </div>
           </div>
-        </div>
-        <div class="chat-input">
-          <input v-model="chatInput" @keydown.enter="sendChat" placeholder="问关于数据的问题..." />
-          <button @click="sendChat" :disabled="chatLoading">发送</button>
-        </div>
+          <p v-if="detailLoading" class="thinking">正在读取数据…</p>
+          <div v-else class="preview-table">
+            <table>
+              <thead>
+                <tr>
+                  <th v-for="col in previewColumns" :key="col">{{ col }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, index) in previewData" :key="index">
+                  <td v-for="col in previewColumns" :key="col">{{ row[col] ?? '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="section-title">
+            <div>
+              <h2>统计分析</h2>
+              <p>查看数据分布与变量关系</p>
+            </div>
+            <div class="row-actions">
+              <button :disabled="busy" @click="runAnalysis('descriptive')">描述性统计</button
+              ><button :disabled="busy" @click="runAnalysis('correlation')">相关性分析</button>
+            </div>
+          </div>
+          <p v-if="analyzing" class="thinking">正在分析数据…</p>
+          <template v-else-if="analysisResult"
+            ><p class="report-text">{{ analysisResult.insight }}</p>
+            <details>
+              <summary>查看完整统计结果</summary>
+              <pre class="result-json">{{ JSON.stringify(analysisResult.result, null, 2) }}</pre>
+            </details></template
+          >
+          <p v-else class="field-help">选择一种分析方式，结果将显示在这里。</p>
+        </section>
+        <section class="panel">
+          <h2>数据可视化</h2>
+          <div class="chart-controls">
+            <label
+              >图表类型<select v-model="vizConfig.chartType">
+                <option value="bar">柱状图</option>
+                <option value="line">折线图</option>
+                <option value="scatter">散点图</option>
+                <option value="histogram">直方图</option>
+              </select></label
+            ><label
+              >X 轴 / 分布字段<select v-model="vizConfig.xColumn">
+                <option value="">选择字段</option>
+                <option v-for="col in columns" :key="col" :value="col">{{ col }}</option>
+              </select></label
+            ><label
+              >Y 轴<select
+                v-model="vizConfig.yColumn"
+                :disabled="vizConfig.chartType === 'histogram'"
+              >
+                <option value="">不指定</option>
+                <option v-for="col in columns" :key="col" :value="col">{{ col }}</option>
+              </select></label
+            ><button
+              class="primary-button"
+              :disabled="busy || !vizConfig.xColumn"
+              @click="generateChart"
+            >
+              {{ generatingChart ? '生成中…' : '生成图表' }}
+            </button>
+          </div>
+          <div v-if="chartData" ref="chartContainer" class="chart-container" />
+        </section>
+        <ResearchConversation
+          streaming
+          :key="selectedDataset.id"
+          :endpoint="'/datasets/' + selectedDataset.id + '/agent/'"
+          title="数据解读助手"
+          empty-title="让数据回答问题"
+          empty-description="基于当前数据集的统计信息，讨论结果、异常与后续分析方向。"
+        />
       </div>
+      <section v-else class="panel empty-state analysis-empty">
+        <el-icon><DataAnalysis /></el-icon>
+        <h3>从一份数据，开始探索</h3>
+        <p>上传 CSV 或 Excel，预览字段、计算统计指标并生成可视化图表。</p>
+        <button class="primary-button" @click="showUpload = true">上传第一份数据</button>
+        <p class="field-help">也可以在左侧选择已有数据集。</p>
+      </section>
     </div>
-  </div>
+    <el-dialog
+      v-model="showUpload"
+      title="上传数据集"
+      width="min(540px,94vw)"
+      :close-on-click-modal="!uploading"
+      :show-close="!uploading"
+      :close-on-press-escape="!uploading"
+      ><form class="settings-form" @submit.prevent="uploadFile">
+        <label class="upload-zone"
+          ><el-icon><UploadFilled /></el-icon><strong>选择数据文件</strong
+          ><span>CSV / Excel（.xlsx、.xls）</span
+          ><input
+            ref="fileInput"
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            :disabled="uploading"
+            @change="onFileSelected" /></label
+        ><label>数据集名称<input v-model="uploadName" placeholder="留空使用文件名" /></label
+        ><label
+          >描述<textarea v-model="uploadDesc" rows="2" placeholder="说明数据来源、内容或用途" />
+        </label>
+        <p v-if="uploadError" class="error-banner" role="alert">{{ uploadError }}</p>
+        <div class="dialog-actions">
+          <button
+            type="button"
+            class="secondary-button"
+            :disabled="uploading"
+            @click="showUpload = false"
+          >
+            取消</button
+          ><button class="primary-button" :disabled="uploading || !selectedFile">
+            {{ uploading ? '正在上传…' : '上传数据' }}
+          </button>
+        </div>
+      </form></el-dialog
+    >
+  </main>
 </template>
-
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import axios from '../axios'
-import * as echarts from 'echarts'
+import * as echarts from 'echarts/core'
+import { BarChart, LineChart, ScatterChart } from 'echarts/charts'
+import { TitleComponent, TooltipComponent, GridComponent } from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import ResearchConversation from '@/components/ResearchConversation.vue'
+import { apiError } from '@/utils/apiError'
+echarts.use([
+  BarChart,
+  LineChart,
+  ScatterChart,
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  CanvasRenderer,
+])
 
+const openUpload = () => {
+  showUpload.value = true
+  uploadError.value = ''
+  selectedFile.value = null
+  uploadName.value = ''
+  uploadDesc.value = ''
+}
 const datasets = ref([])
+const pageError = ref(''),
+  listLoading = ref(false),
+  detailLoading = ref(false),
+  search = ref('')
+const filteredDatasets = computed(() =>
+  datasets.value.filter((ds) => ds.name.toLowerCase().includes(search.value.toLowerCase())),
+)
+const busy = computed(() => detailLoading.value || analyzing.value || generatingChart.value)
+let resizeObserver
+const disposeChart = () => {
+  resizeObserver?.disconnect()
+  chart?.dispose()
+  chart = null
+}
+onUnmounted(disposeChart)
 const selectedDataset = ref(null)
 const showUpload = ref(false)
 const uploading = ref(false)
@@ -160,9 +244,6 @@ const generatingChart = ref(false)
 const chartData = ref(null)
 const chartContainer = ref(null)
 let chart = null
-const chatMessages = ref([])
-const chatInput = ref('')
-const chatLoading = ref(false)
 
 const formatDate = (dateStr) => {
   const date = new Date(dateStr)
@@ -176,11 +257,15 @@ const formatFileSize = (bytes) => {
 }
 
 const fetchDatasets = async () => {
+  listLoading.value = true
+  pageError.value = ''
   try {
     const res = await axios.get('/datasets/')
     datasets.value = res.data
   } catch (error) {
-    console.error('获取数据集失败', error)
+    pageError.value = apiError(error, '数据集加载失败')
+  } finally {
+    listLoading.value = false
   }
 }
 
@@ -193,86 +278,103 @@ const uploadFile = async () => {
     uploadError.value = '请选择文件'
     return
   }
-  
+
   uploading.value = true
   uploadError.value = ''
-  
+
   const formData = new FormData()
   formData.append('file', selectedFile.value)
   if (uploadName.value) formData.append('name', uploadName.value)
   if (uploadDesc.value) formData.append('description', uploadDesc.value)
-  
+
   try {
-    const res = await axios.post('/datasets/upload/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+    await axios.post('/datasets/upload/', formData, {
+      headers: { 'Content-Type': undefined },
+      timeout: 180000,
     })
-    
+
     showUpload.value = false
     uploadName.value = ''
     uploadDesc.value = ''
     selectedFile.value = null
     if (fileInput.value) fileInput.value.value = ''
     fetchDatasets()
-    
   } catch (error) {
-    uploadError.value = error.response?.data?.error || '上传失败'
+    uploadError.value = apiError(error, '上传失败')
   } finally {
     uploading.value = false
   }
 }
 
 const selectDataset = async (dataset) => {
+  if (busy.value) return
+  detailLoading.value = true
+  pageError.value = ''
   selectedDataset.value = dataset
   analysisResult.value = null
   chartData.value = null
-  chatMessages.value = []
-  
+  disposeChart()
+  previewData.value = []
+  previewColumns.value = []
+  columns.value = []
+  vizConfig.value.xColumn = ''
+  vizConfig.value.yColumn = ''
+
   try {
     const res = await axios.get(`/datasets/${dataset.id}/`)
     previewData.value = res.data.preview || []
     previewColumns.value = res.data.columns || []
     columns.value = res.data.columns || []
+    vizConfig.value.xColumn = columns.value[0] || ''
   } catch (error) {
-    console.error('加载数据集详情失败', error)
+    pageError.value = apiError(error, '数据预览加载失败')
+  } finally {
+    detailLoading.value = false
   }
 }
 
 const runAnalysis = async (type) => {
-  if (!selectedDataset.value) return
-  
+  if (!selectedDataset.value || busy.value) return
+
+  pageError.value = ''
   analyzing.value = true
-  
+
   try {
     const res = await axios.post(`/datasets/${selectedDataset.value.id}/analyze/`, {
-      analysis_type: type
+      analysis_type: type,
     })
     analysisResult.value = res.data
   } catch (error) {
-    console.error('分析失败', error)
+    pageError.value = apiError(error, '分析失败')
   } finally {
     analyzing.value = false
   }
 }
 
 const generateChart = async () => {
-  if (!selectedDataset.value || !vizConfig.value.xColumn) return
-  
+  if (!selectedDataset.value || !vizConfig.value.xColumn || busy.value) return
+  pageError.value = ''
+  if (vizConfig.value.chartType === 'scatter' && !vizConfig.value.yColumn) {
+    pageError.value = '散点图需要选择 X 和 Y 列'
+    return
+  }
+
   generatingChart.value = true
-  
+
   try {
     const res = await axios.post(`/datasets/${selectedDataset.value.id}/visualize/`, {
       chart_type: vizConfig.value.chartType,
       x_column: vizConfig.value.xColumn,
-      y_column: vizConfig.value.yColumn
+      y_column: vizConfig.value.yColumn,
     })
-    
+
     chartData.value = res.data
-    
+
     await nextTick()
     if (chartContainer.value) {
-      if (chart) chart.dispose()
+      disposeChart()
       chart = echarts.init(chartContainer.value)
-      
+
       let option = {}
       if (res.data.chart_type === 'bar') {
         option = {
@@ -280,7 +382,7 @@ const generateChart = async () => {
           tooltip: { trigger: 'axis' },
           xAxis: { type: 'category', data: res.data.chart_data.x },
           yAxis: { type: 'value' },
-          series: [{ type: 'bar', data: res.data.chart_data.y }]
+          series: [{ type: 'bar', data: res.data.chart_data.y }],
         }
       } else if (res.data.chart_type === 'line') {
         option = {
@@ -288,7 +390,7 @@ const generateChart = async () => {
           tooltip: { trigger: 'axis' },
           xAxis: { type: 'category', data: res.data.chart_data.x },
           yAxis: { type: 'value' },
-          series: [{ type: 'line', data: res.data.chart_data.y }]
+          series: [{ type: 'line', data: res.data.chart_data.y }],
         }
       } else if (res.data.chart_type === 'scatter') {
         option = {
@@ -296,20 +398,23 @@ const generateChart = async () => {
           tooltip: { trigger: 'axis' },
           xAxis: { type: 'value' },
           yAxis: { type: 'value' },
-          series: [{
-            type: 'scatter',
-            data: res.data.chart_data.x.map((x, i) => [x, res.data.chart_data.y[i]])
-          }]
+          series: [
+            {
+              type: 'scatter',
+              data: res.data.chart_data.x.map((x, i) => [x, res.data.chart_data.y[i]]),
+            },
+          ],
         }
       } else if (res.data.chart_type === 'histogram') {
         // 计算直方图
-        const values = res.data.chart_data.values
+        const values = res.data.chart_data.values.filter(Number.isFinite)
+        if (!values.length) throw new Error('没有有效数值')
         const bins = res.data.chart_data.bins || 20
-        const min = Math.min(...values)
-        const max = Math.max(...values)
-        const binWidth = (max - min) / bins
+        const min = values.reduce((a, b) => Math.min(a, b), Infinity)
+        const max = values.reduce((a, b) => Math.max(a, b), -Infinity)
+        const binWidth = (max - min || 1) / bins
         const histogram = new Array(bins).fill(0)
-        values.forEach(v => {
+        values.forEach((v) => {
           let binIndex = Math.floor((v - min) / binWidth)
           if (binIndex === bins) binIndex = bins - 1 // 处理最大值
           histogram[binIndex]++
@@ -327,369 +432,41 @@ const generateChart = async () => {
           xAxis: {
             type: 'category',
             data: xAxisData,
-            axisLabel: { rotate: 45 }
+            axisLabel: { rotate: 45 },
           },
           yAxis: { type: 'value' },
-          series: [{
-            type: 'bar',
-            data: histogram,
-            name: '频数'
-          }]
+          series: [
+            {
+              type: 'bar',
+              data: histogram,
+              name: '频数',
+            },
+          ],
         }
       }
-      
-      chart.setOption(option)
+
+      chart.setOption({
+        ...option,
+        color: ['#326bd6'],
+        grid: { left: 48, right: 24, bottom: 70, containLabel: true },
+      })
+      resizeObserver = new ResizeObserver(() => chart?.resize())
+      resizeObserver.observe(chartContainer.value)
     }
-    
   } catch (error) {
-    console.error('生成图表失败', error)
+    pageError.value = apiError(error, '生成图表失败')
   } finally {
     generatingChart.value = false
-  }
-}
-
-const sendChat = async () => {
-  if (!chatInput.value.trim() || !selectedDataset.value) return
-  
-  const userMsg = chatInput.value
-  chatMessages.value.push({ role: 'user', content: userMsg })
-  chatInput.value = ''
-  chatLoading.value = true
-  
-  try {
-    const res = await axios.post(`/datasets/${selectedDataset.value.id}/agent/`, {
-      message: userMsg
-    })
-    chatMessages.value.push({ role: 'assistant', content: res.data.response })
-  } catch (error) {
-    chatMessages.value.push({ role: 'assistant', content: '抱歉，分析失败' })
-  } finally {
-    chatLoading.value = false
   }
 }
 
 const vizConfig = ref({
   chartType: 'bar',
   xColumn: '',
-  yColumn: ''
+  yColumn: '',
 })
 
 onMounted(() => {
   fetchDatasets()
 })
 </script>
-
-<style scoped>
-.data-analysis-page {
-  max-width: 1200px;
-  margin: 30px auto;
-  padding: 0 20px;
-}
-
-.page-header {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 40px;
-}
-
-.back-btn {
-  position: absolute;
-  top: 0;
-  left: 0;
-  padding: 10px 16px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  z-index: 10;
-}
-
-.back-btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--success-color);
-  transform: translateX(-4px);
-}
-
-.btn-icon {
-  font-size: 16px;
-}
-
-.header-content {
-  flex: 1;
-  text-align: center;
-}
-
-.upload-btn {
-  padding: 10px 20px;
-  background-color: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.dataset-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.dataset-card {
-  padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.dataset-card:hover {
-  border-color: #1890ff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.dataset-card h3 {
-  margin: 0 0 10px;
-  font-size: 16px;
-}
-
-.dataset-card p {
-  margin: 5px 0;
-  color: #666;
-  font-size: 12px;
-}
-
-.analysis-detail {
-  border-top: 1px solid #e0e0e0;
-  padding-top: 20px;
-}
-
-.detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #999;
-}
-
-.preview-table {
-  overflow-x: auto;
-  margin-bottom: 20px;
-}
-
-.preview-table table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.preview-table th, .preview-table td {
-  border: 1px solid #e0e0e0;
-  padding: 8px;
-  text-align: left;
-}
-
-.stats-grid {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  flex: 1;
-  padding: 15px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.stat-label {
-  display: block;
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 5px;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #1890ff;
-}
-
-.analysis-actions {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.analysis-actions button {
-  padding: 8px 16px;
-  background-color: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.insight {
-  padding: 15px;
-  background-color: #e8f5e9;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  line-height: 1.6;
-}
-
-.result-data {
-  background-color: #f5f5f5;
-  padding: 15px;
-  border-radius: 8px;
-  overflow-x: auto;
-  font-size: 12px;
-  max-height: 300px;
-}
-
-.viz-controls {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-}
-
-.viz-controls select, .viz-controls button {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.viz-controls button {
-  background-color: #1890ff;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-.chart-container {
-  height: 400px;
-  margin-bottom: 20px;
-}
-
-.ai-chat {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.chat-messages {
-  height: 200px;
-  overflow-y: auto;
-  padding: 15px;
-  background-color: #f9f9f9;
-}
-
-.message {
-  margin-bottom: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-}
-
-.message.user {
-  background-color: #1890ff;
-  color: white;
-  text-align: right;
-}
-
-.message.assistant {
-  background-color: white;
-  border: 1px solid #e0e0e0;
-}
-
-.chat-input {
-  display: flex;
-  padding: 10px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.chat-input input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-right: 10px;
-}
-
-.chat-input button {
-  padding: 8px 16px;
-  background-color: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: white;
-  padding: 30px;
-  border-radius: 8px;
-  width: 450px;
-}
-
-.modal-content input, .modal-content textarea {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.modal-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.error {
-  color: #f44336;
-  margin-top: 10px;
-}
-
-.empty {
-  text-align: center;
-  color: #999;
-  padding: 40px;
-}
-
-.hint {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 10px;
-}
-</style>

@@ -11,9 +11,9 @@ class DataAnalysisService:
     @staticmethod
     def load_dataframe(file_path):
         """加载数据文件为DataFrame"""
-        if file_path.endswith('.csv'):
+        if file_path.lower().endswith('.csv'):
             df = pd.read_csv(file_path)
-        elif file_path.endswith(('.xlsx', '.xls')):
+        elif file_path.lower().endswith(('.xlsx', '.xls')):
             df = pd.read_excel(file_path)
         else:
             raise ValueError("不支持的文件格式，请上传CSV或Excel文件")
@@ -27,7 +27,13 @@ class DataAnalysisService:
         full_path = default_storage.path(file_path)
         
         # 读取数据
-        df = DataAnalysisService.load_dataframe(full_path)
+        try:
+            df = DataAnalysisService.load_dataframe(full_path)
+            if df.empty or not len(df.columns):
+                raise ValueError("数据文件不能为空")
+        except Exception:
+            default_storage.delete(file_path)
+            raise
         
         # 创建数据集记录
         dataset = Dataset.objects.create(

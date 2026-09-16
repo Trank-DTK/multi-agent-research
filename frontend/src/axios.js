@@ -1,20 +1,21 @@
 import axios from 'axios'
-import router from '@/router'
-import { errorHandler } from './utils/errorHandler'
 import { performanceMonitor } from './utils/performance'
 
 // 创建axios实例
 const instance = axios.create({
   baseURL: '/api',
-  timeout: 30000,  // 30秒超时
+  timeout: 30000, // 30秒超时
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 })
 
 // 请求拦截器
 instance.interceptors.request.use(
-  config => {
+  (config) => {
+    if (config.data instanceof FormData) config.headers.delete('Content-Type')
+    if (config.method === 'post' && /papers|sections|polish|abstract/.test(config.url))
+      config.timeout = 180000
     const token = localStorage.getItem('access')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -25,23 +26,23 @@ instance.interceptors.request.use(
 
     return config
   },
-  error => {
+  (error) => {
     return Promise.reject(error)
-  }
+  },
 )
 
 // 响应拦截器
 instance.interceptors.response.use(
-  response => {
+  (response) => {
     const duration = Date.now() - response.config.metadata?.startTime
     performanceMonitor.measureAPI(response.config.url, duration, true)
     return response
   },
-  error => {
+  (error) => {
     const duration = Date.now() - error.config?.metadata?.startTime
     performanceMonitor.measureAPI(error.config?.url, duration, false)
     return Promise.reject(error)
-  }
+  },
 )
 
 export default instance

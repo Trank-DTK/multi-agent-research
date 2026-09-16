@@ -281,3 +281,5 @@ LOGGING = {
         },
     },
 }
+# Keep this value stable when rotating SECRET_KEY, or re-enter saved provider keys.
+MODEL_KEY_SECRET = env("MODEL_KEY_SECRET", default=SECRET_KEY)

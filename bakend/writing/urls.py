@@ -5,7 +5,10 @@ from .views import (
     ExportDocxView, WritingAgentChatView
 )
 
+from .section_views import SectionDetailView
+
 urlpatterns = [
+    path('papers/<int:paper_id>/sections/<int:section_id>/', SectionDetailView.as_view()),
     path('outline/', GenerateOutlineView.as_view(), name='generate_outline'),
     path('papers/', PaperListView.as_view(), name='paper_list'),
     path('papers/create/', PaperCreateView.as_view(), name='paper_create'),
