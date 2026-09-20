@@ -62,7 +62,12 @@
         </div>
         <div v-for="(msg, index) in messages" :key="index" :class="['message', msg.role]">
           <div class="avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
-          <div class="content">{{ msg.content }}</div>
+          <div class="content">
+            <MarkdownContent v-if="msg.role === 'assistant'" :content="msg.content" /><span
+              v-else
+              >{{ msg.content }}</span
+            >
+          </div>
         </div>
         <div v-if="loading && !messages.at(-1)?.content" class="message assistant">
           <div class="avatar">🤖</div>
@@ -91,6 +96,7 @@
 </template>
 
 <script setup>
+import MarkdownContent from '@/components/MarkdownContent.vue'
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import axios from '@/axios'
 import { streamChat } from '@/utils/streamChat'

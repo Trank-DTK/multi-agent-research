@@ -25,6 +25,7 @@ test('renders before completion, decodes split UTF-8, authenticates POST', async
   await first
   assert.deepEqual(events, [{ token: '你好' }])
   assert.equal(sent.options.headers.Authorization, 'Bearer test-token')
+  assert.equal(sent.options.headers.Accept, 'text/event-stream, application/json')
   assert.equal(JSON.parse(sent.options.body).stream, true)
   controller.enqueue(encoder.encode('data: {"token":"!"}\n\ndata: [DONE]\n\n'))
   controller.close()

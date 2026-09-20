@@ -10,10 +10,10 @@
         <p>文献助手 + 实验助手 + Critic评审官 协同工作，自动评估质量并优化</p>
       </div>
     </div>
-    
+
     <div class="input-section">
-      <textarea 
-        v-model="researchQuestion" 
+      <textarea
+        v-model="researchQuestion"
         placeholder="输入你的研究问题，例如：如何提高深度学习模型在图像分类任务中的准确率？"
         rows="3"
       ></textarea>
@@ -23,15 +23,19 @@
     </div>
 
     <!-- 工作流可视化 -->
-    <WorkflowVisualizer 
-      v-if="showWorkflow" 
-      :steps="workflowSteps" 
+    <WorkflowVisualizer
+      v-if="showWorkflow"
+      :steps="workflowSteps"
       :show-dag="showDAG"
       :dag-data="dagData"
     />
-    
+
     <!-- 评审结果卡片 -->
-    <div v-if="evaluation" class="evaluation-card" :class="{ passed: evaluation.passed, failed: !evaluation.passed }">
+    <div
+      v-if="evaluation"
+      class="evaluation-card"
+      :class="{ passed: evaluation.passed, failed: !evaluation.passed }"
+    >
       <div class="evaluation-header">
         <div class="score">
           <span class="score-number">{{ evaluation.overall_score }}</span>
@@ -41,45 +45,63 @@
           </span>
         </div>
       </div>
-      
+
       <div class="dimensions">
         <h4>各维度评分</h4>
         <div class="dimension-bars">
           <div class="dimension-item">
             <span>文献质量</span>
-            <div class="bar"><div class="fill" :style="{ width: (evaluation.dimensions.literature_review * 10) + '%' }"></div></div>
+            <div class="bar">
+              <div
+                class="fill"
+                :style="{ width: evaluation.dimensions.literature_review * 10 + '%' }"
+              ></div>
+            </div>
             <span>{{ evaluation.dimensions.literature_review }}/10</span>
           </div>
           <div class="dimension-item">
             <span>实验设计</span>
-            <div class="bar"><div class="fill" :style="{ width: (evaluation.dimensions.experiment_design * 10) + '%' }"></div></div>
+            <div class="bar">
+              <div
+                class="fill"
+                :style="{ width: evaluation.dimensions.experiment_design * 10 + '%' }"
+              ></div>
+            </div>
             <span>{{ evaluation.dimensions.experiment_design }}/10</span>
           </div>
           <div class="dimension-item">
             <span>一致性</span>
-            <div class="bar"><div class="fill" :style="{ width: (evaluation.dimensions.consistency * 10) + '%' }"></div></div>
+            <div class="bar">
+              <div
+                class="fill"
+                :style="{ width: evaluation.dimensions.consistency * 10 + '%' }"
+              ></div>
+            </div>
             <span>{{ evaluation.dimensions.consistency }}/10</span>
           </div>
           <div class="dimension-item">
             <span>可行性</span>
-            <div class="bar"><div class="fill" :style="{ width: (evaluation.dimensions.feasibility * 10) + '%' }"></div></div>
+            <div class="bar">
+              <div
+                class="fill"
+                :style="{ width: evaluation.dimensions.feasibility * 10 + '%' }"
+              ></div>
+            </div>
             <span>{{ evaluation.dimensions.feasibility }}/10</span>
           </div>
         </div>
       </div>
-      
+
       <div v-if="evaluation.suggestions && evaluation.suggestions.length" class="suggestions">
         <h4>💡 改进建议</h4>
         <ul>
           <li v-for="(s, idx) in evaluation.suggestions" :key="idx">{{ s }}</li>
         </ul>
       </div>
-      
-      <div v-if="improved" class="improved-badge">
-        ✨ 已根据建议自动优化
-      </div>
+
+      <div v-if="improved" class="improved-badge">✨ 已根据建议自动优化</div>
     </div>
-    
+
     <!-- 研究结果 -->
     <div v-if="result" class="result-section">
       <div class="result-tabs">
@@ -90,19 +112,19 @@
           🔍 评审详情
         </button>
       </div>
-      
+
       <div class="result-content">
         <div v-if="activeTab === 'report'" class="report">
-          <div class="markdown-content" v-html="formatContent(result.response)"></div>
+          <MarkdownContent :content="result.response" />
         </div>
-        
+
         <div v-if="activeTab === 'review'" class="review-detail">
           <h3>评审报告</h3>
           <pre>{{ JSON.stringify(evaluation, null, 2) }}</pre>
         </div>
       </div>
     </div>
-    
+
     <!-- 加载状态 -->
     <div v-if="loading" class="loading">
       <div class="spinner"></div>
@@ -126,6 +148,7 @@
 </template>
 
 <script setup>
+import MarkdownContent from '@/components/MarkdownContent.vue'
 import { ref } from 'vue'
 import axios from '../axios'
 
@@ -139,61 +162,9 @@ const literatureStatus = ref('等待中')
 const experimentStatus = ref('等待中')
 const criticStatus = ref('等待中')
 
-const escapeHtml = (text) => {
-  if (!text) return ''
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
-
-const formatContent = (content) => {
-  if (!content) return ''
-
-  // 先转义HTML特殊字符
-  let formatted = escapeHtml(content)
-
-  // 处理标题
-  formatted = formatted.replace(/^### (.*?)$/gm, '<h3>$1</h3>')
-  formatted = formatted.replace(/^## (.*?)$/gm, '<h2>$1</h2>')
-  formatted = formatted.replace(/^# (.*?)$/gm, '<h1>$1</h1>')
-
-  // 处理无序列表
-  formatted = formatted.replace(/^\s*[-*+] (.*?)$/gm, '<li>$1</li>')
-
-  // 处理有序列表
-  formatted = formatted.replace(/^\s*\d+\. (.*?)$/gm, '<li>$1</li>')
-
-  // 如果有列表项，包裹在ul或ol中（简化处理）
-  if (formatted.includes('<li>')) {
-    formatted = formatted.replace(/<li>(.*?)<\/li>/g, '<ul><li>$1</li></ul>')
-    // 合并相邻的ul标签
-    formatted = formatted.replace(/<\/ul>\s*<ul>/g, '')
-  }
-
-  // 处理粗体
-  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-
-  // 处理斜体
-  formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>')
-
-  // 处理换行：两个以上换行符作为段落分隔，单个换行作为<br>
-  formatted = formatted.replace(/\n\s*\n/g, '</p><p>')
-  formatted = formatted.replace(/\n/g, '<br>')
-
-  // 包裹在段落中
-  if (!formatted.startsWith('<h') && !formatted.startsWith('<ul') && !formatted.startsWith('<li')) {
-    formatted = '<p>' + formatted + '</p>'
-  }
-
-  return formatted
-}
-
 const startResearch = async () => {
   if (!researchQuestion.value.trim()) return
-  
+
   loading.value = true
   result.value = null
   evaluation.value = null
@@ -201,20 +172,19 @@ const startResearch = async () => {
   literatureStatus.value = '调研中...'
   experimentStatus.value = '等待中'
   criticStatus.value = '等待中'
-  
+
   try {
     const response = await axios.post('/collaboration/review/', {
-      question: researchQuestion.value
+      question: researchQuestion.value,
     })
-    
+
     result.value = response.data
     evaluation.value = response.data.evaluation
     improved.value = response.data.improved || false
-    
+
     literatureStatus.value = '完成 ✓'
     experimentStatus.value = '完成 ✓'
     criticStatus.value = evaluation.value?.passed ? '评审通过 ✓' : '建议改进'
-    
   } catch (error) {
     console.error('协作研究失败:', error)
     alert(error.response?.data?.error || '研究失败，请稍后重试')
@@ -496,8 +466,12 @@ button:disabled {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .agent-status {

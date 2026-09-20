@@ -11,7 +11,7 @@ class StreamTests(TestCase):
         self.user = get_user_model().objects.create_user(username='stream-user')
 
     def request(self, payload):
-        request = APIRequestFactory().post('/chat/stream/', payload, format='json')
+        request = APIRequestFactory().post('/chat/stream/', payload, format='json', HTTP_ACCEPT='text/event-stream, application/json')
         force_authenticate(request, user=self.user)
         return ChatStreamView.as_view()(request)
 
@@ -55,7 +55,7 @@ class StreamTests(TestCase):
         from documents.models import Document, DocumentChunk
         doc = Document.objects.create(user=self.user, title='Evidence', file_name='evidence.pdf')
         DocumentChunk.objects.create(document=doc, chunk_index=0, content='SELECTED RESEARCH EVIDENCE')
-        request = APIRequestFactory().post('/literature/chat/', {'message':'research', 'document_ids':[doc.pk], 'stream':True}, format='json')
+        request = APIRequestFactory().post('/literature/chat/', {'message':'research', 'document_ids':[doc.pk], 'stream':True}, format='json', HTTP_ACCEPT='text/event-stream, application/json')
         force_authenticate(request, user=self.user)
         build.return_value.stream_chat.return_value = iter(['one', 'two'])
         response = LiteratureAgentView.as_view()(request)

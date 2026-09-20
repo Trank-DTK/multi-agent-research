@@ -933,3 +933,37 @@
     max-width: 480px;
   }
 }
+
+.dataset-row {
+  position: relative;
+}
+.dataset-row .dataset-choice {
+  width: 100%;
+  padding-right: 64px;
+}
+.dataset-delete {
+  position: absolute;
+  right: 10px;
+  top: 18px;
+}
+.creation-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  margin: 18px 0;
+}
+.creation-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-color);
+  border-top-color: #528ef2;
+  border-radius: 50%;
+  animation: creation-spin 1s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes creation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

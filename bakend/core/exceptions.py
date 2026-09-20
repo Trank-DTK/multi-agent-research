@@ -3,12 +3,16 @@ import traceback
 from django.http import JsonResponse
 from rest_framework.views import exception_handler
 from rest_framework import status
+from rest_framework.exceptions import Throttled
 
 def custom_exception_handler(exc, context):
     """自定义异常处理器"""
     response = exception_handler(exc, context)
     
     if response is not None:
+        if isinstance(exc, Throttled):
+            wait = max(1, int(exc.wait or 1))
+            response.data = {"detail": f"操作较频繁，请在 {wait} 秒后重试。", "retry_after": wait}
         return response
     
     # 记录异常日志，获取完整堆栈

@@ -16,22 +16,30 @@
 
     <!-- 新建论文弹窗 -->
     <div v-if="showNewPaper" class="modal">
-      <div class="modal-content">
+      <div class="modal-content" :aria-busy="creating">
         <h3>新建论文</h3>
-        <input v-model="newPaperTitle" placeholder="论文标题" />
+        <input v-model="newPaperTitle" :disabled="creating" placeholder="论文标题" />
         <textarea
           v-model="newPaperTopic"
+          :disabled="creating"
           placeholder="研究主题（可选，用于生成大纲）"
           rows="3"
         ></textarea>
+        <p v-if="createError" class="error-banner" role="alert">{{ createError }}</p>
+        <div v-if="creating" class="creation-status" role="status" aria-live="polite">
+          <span class="creation-spinner" aria-hidden="true"></span
+          >{{ newPaperTopic.trim() ? '正在创建论文并生成大纲，请稍候…' : '正在创建论文，请稍候…' }}
+        </div>
         <div class="modal-buttons">
-          <button @click="createPaper" :disabled="creating">创建</button>
-          <button @click="showNewPaper = false">取消</button>
+          <button @click="createPaper" :disabled="creating || !newPaperTitle.trim()">
+            {{ creating ? '创建中…' : '创建' }}
+          </button>
+          <button @click="showNewPaper = false" :disabled="creating">取消</button>
         </div>
       </div>
     </div>
 
-    <p v-if="pageError" class="error-banner" role="alert">{{pageError}}</p>
+    <p v-if="pageError" class="error-banner" role="alert">{{ pageError }}</p>
     <div class="main-layout">
       <!-- 左侧：论文列表 -->
       <div class="paper-list">
@@ -65,8 +73,17 @@
 
         <!-- 摘要区域 -->
         <div class="abstract-area">
-          <label>摘要</label>
-          <textarea v-model="selectedPaper.abstract" rows="4" @blur="savePaper"></textarea>
+          <label>摘要</label
+          ><button class="text-button" @click="editingAbstract = !editingAbstract">
+            {{ editingAbstract ? '预览' : '编辑' }}
+          </button>
+          <textarea
+            v-if="editingAbstract || !selectedPaper.abstract"
+            v-model="selectedPaper.abstract"
+            rows="4"
+            @blur="savePaper"
+          ></textarea
+          ><MarkdownContent v-else :content="selectedPaper.abstract" />
         </div>
 
         <!-- 章节列表 -->
@@ -79,8 +96,17 @@
               </button>
               <button @click="deleteSection(section.id)" class="delete-section">×</button>
             </div>
+            <button class="text-button" @click="toggleSection(section)">
+              {{ editingSections.includes(section.id) ? '预览' : '编辑' }}
+            </button>
             <div class="section-content">
+              <MarkdownContent
+                v-if="!editingSections.includes(section.id)"
+                :content="section.content"
+                rich-text
+              />
               <QuillEditor
+                v-else
                 v-model:content="section.content"
                 contentType="html"
                 @blur="saveSection(section)"
@@ -100,7 +126,10 @@
           <h4>🤖 写作助手</h4>
           <div class="chat-messages">
             <div v-for="(msg, idx) in chatMessages" :key="idx" :class="['message', msg.role]">
-              {{ msg.content }}
+              <MarkdownContent v-if="msg.role === 'assistant'" :content="msg.content" /><span
+                v-else
+                >{{ msg.content }}</span
+              >
             </div>
           </div>
           <div class="chat-input">
@@ -126,20 +155,34 @@
 </template>
 
 <script setup>
+import MarkdownContent from '@/components/MarkdownContent.vue'
+import { renderStoredContent } from '@/utils/markdown'
 import { ref, onMounted } from 'vue'
 import axios from '../axios'
-import {apiError} from '@/utils/apiError'
-const pageError=ref('')
+import { apiError } from '@/utils/apiError'
+const pageError = ref('')
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 const papers = ref([])
 const selectedPaper = ref(null)
 const sections = ref([])
+const editingAbstract = ref(false)
+const editingSections = ref([])
+const toggleSection = (section) => {
+  if (editingSections.value.includes(section.id)) {
+    editingSections.value = editingSections.value.filter((id) => id !== section.id)
+    saveSection(section)
+  } else {
+    section.content = renderStoredContent(section.content)
+    editingSections.value.push(section.id)
+  }
+}
 const showNewPaper = ref(false)
 const newPaperTitle = ref('')
 const newPaperTopic = ref('')
 const creating = ref(false)
+const createError = ref('')
 const saving = ref(false)
 const generatingAbstract = ref(false)
 const exporting = ref(false)
@@ -164,12 +207,14 @@ const fetchPapers = async () => {
     const res = await axios.get('/papers/')
     papers.value = res.data
   } catch (error) {
-    pageError.value=apiError(error,'获取论文列表失败')
+    pageError.value = apiError(error, '获取论文列表失败')
   }
 }
 
 const createPaper = async () => {
-  if (!newPaperTitle.value) return
+  if (creating.value || !newPaperTitle.value.trim()) return
+  createError.value = ''
+  pageError.value = ''
 
   creating.value = true
   try {
@@ -183,7 +228,7 @@ const createPaper = async () => {
     await fetchPapers()
     await selectPaper(res.data.id)
   } catch (error) {
-    pageError.value=apiError(error,'创建论文失败')
+    createError.value = apiError(error, '创建论文失败')
   } finally {
     creating.value = false
   }
@@ -193,9 +238,11 @@ const selectPaper = async (paperId) => {
   try {
     const res = await axios.get(`/papers/${paperId}/`)
     selectedPaper.value = res.data
+    editingSections.value = []
+    editingAbstract.value = false
     sections.value = res.data.sections || []
   } catch (error) {
-    pageError.value=apiError(error,'加载论文失败')
+    pageError.value = apiError(error, '加载论文失败')
   }
 }
 
@@ -203,6 +250,7 @@ const savePaper = async () => {
   if (!selectedPaper.value) return
 
   saving.value = true
+  pageError.value = ''
   try {
     await axios.put(`/papers/${selectedPaper.value.id}/`, {
       title: selectedPaper.value.title,
@@ -211,16 +259,25 @@ const savePaper = async () => {
       content: selectedPaper.value.content,
       status: selectedPaper.value.status,
     })
+    const item = papers.value.find((paper) => paper.id === selectedPaper.value.id)
+    if (item)
+      Object.assign(item, { title: selectedPaper.value.title, status: selectedPaper.value.status })
   } catch (error) {
-    pageError.value=apiError(error,'保存失败')
+    pageError.value = apiError(error, '保存失败')
   } finally {
     saving.value = false
   }
 }
 
 const saveSection = async (section) => {
-  try { await axios.patch(`/papers/${selectedPaper.value.id}/sections/${section.id}/`, {title:section.title,content:section.content}) }
-  catch(error){ pageError.value=apiError(error,'章节保存失败，请重试') }
+  try {
+    await axios.patch(`/papers/${selectedPaper.value.id}/sections/${section.id}/`, {
+      title: section.title,
+      content: section.content,
+    })
+  } catch (error) {
+    pageError.value = apiError(error, '章节保存失败，请重试')
+  }
 }
 
 const addSection = async () => {
@@ -239,7 +296,7 @@ const addSection = async () => {
     })
     newSectionTitle.value = ''
   } catch (error) {
-    pageError.value=apiError(error,'添加章节失败')
+    pageError.value = apiError(error, '添加章节失败')
   }
 }
 
@@ -259,13 +316,17 @@ const generateSection = async () => {
     })
     newSectionTitle.value = ''
   } catch (error) {
-    pageError.value=apiError(error,'AI生成章节失败')
+    pageError.value = apiError(error, 'AI生成章节失败')
   }
 }
 
 const deleteSection = async (sectionId) => {
-  try { await axios.delete(`/papers/${selectedPaper.value.id}/sections/${sectionId}/`); sections.value=sections.value.filter(s=>s.id!==sectionId) }
-  catch(error){pageError.value=apiError(error,'删除章节失败')}
+  try {
+    await axios.delete(`/papers/${selectedPaper.value.id}/sections/${sectionId}/`)
+    sections.value = sections.value.filter((s) => s.id !== sectionId)
+  } catch (error) {
+    pageError.value = apiError(error, '删除章节失败')
+  }
 }
 
 const generateAbstract = async () => {
@@ -277,9 +338,10 @@ const generateAbstract = async () => {
       content: sections.value.map((s) => s.content).join('\n'),
     })
     selectedPaper.value.abstract = res.data.abstract
+    editingAbstract.value = false
     await savePaper()
   } catch (error) {
-    pageError.value=apiError(error,'生成摘要失败')
+    pageError.value = apiError(error, '生成摘要失败')
   } finally {
     generatingAbstract.value = false
   }
@@ -295,7 +357,7 @@ const polishSection = async (section) => {
     section.content = res.data.polished
     await saveSection(section)
   } catch (error) {
-    pageError.value=apiError(error,'润色失败')
+    pageError.value = apiError(error, '润色失败')
   } finally {
     polishing.value = false
   }
@@ -346,7 +408,7 @@ const exportDocx = async () => {
       alert(`导出失败: ${errorMsg}`)
     }
   } catch (error) {
-    pageError.value=apiError(error,'导出失败')
+    pageError.value = apiError(error, '导出失败')
     if (error.response) {
       // 服务器返回了错误状态码
       let errorMsg = '导出失败'
@@ -380,7 +442,7 @@ const deletePaper = async (paperId) => {
       sections.value = []
     }
   } catch (error) {
-    pageError.value=apiError(error,'删除失败')
+    pageError.value = apiError(error, '删除失败')
   }
 }
 
@@ -396,7 +458,7 @@ const sendChat = async () => {
     const res = await axios.post('/agent/', { message: userMsg })
     chatMessages.value.push({ role: 'assistant', content: res.data.response })
   } catch (error) {
-    chatMessages.value.push({ role: 'assistant', content: apiError(error,'处理失败') })
+    chatMessages.value.push({ role: 'assistant', content: apiError(error, '处理失败') })
   } finally {
     chatLoading.value = false
   }

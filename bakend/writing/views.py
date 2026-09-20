@@ -9,6 +9,8 @@ from .models import Paper, PaperSection, Citation, WritingHistory
 from agents.writing_agent import WritingService
 from docx import Document
 from io import BytesIO
+from django.db import transaction
+from html import escape
 
 
 
@@ -42,26 +44,17 @@ class PaperCreateView(APIView):
         if not title:
             return JsonResponse({'error': '标题不能为空'}, status=400)
         
-        # 创建论文
-        paper = Paper.objects.create(
-            user=request.user,
-            title=title,
-            status='draft'
-        )
-        
-        # 生成大纲
-        if topic:
-            outline = WritingService(request.user).generate_outline(topic)
-            # 解析大纲创建章节
-            paper.outline = outline
-            paper.save()
-        
-        return JsonResponse({
-            'id': paper.id,
-            'title': paper.title,
-            'status': paper.status,
-            'created_at': paper.created_at
-        })
+        # Generate first: a provider failure must not leave an invisible duplicate draft.
+        try:
+            outline = WritingService(request.user).generate_outline(topic) if topic else ''
+        except ValueError as exc:
+            return JsonResponse({'error': str(exc)}, status=502)
+        with transaction.atomic():
+            paper = Paper.objects.create(user=request.user, title=title, status='draft', content=outline)
+            if outline:
+                PaperSection.objects.create(paper=paper, section_type='custom', title='研究大纲', content='<p>' + escape(outline).replace('\n', '<br>') + '</p>', order=0)
+        return JsonResponse({'id': paper.id, 'title': paper.title, 'status': paper.status, 'created_at': paper.created_at}, status=201)
+
 
 
 class PaperDetailView(APIView):

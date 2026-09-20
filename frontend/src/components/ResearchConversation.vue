@@ -20,7 +20,8 @@
         :class="message.role"
       >
         <span class="message-role">{{ message.role === 'user' ? '你' : '研究助手' }}</span>
-        <div>{{ message.content }}</div>
+        <MarkdownContent v-if="message.role === 'assistant'" :content="message.content" />
+        <div v-else>{{ message.content }}</div>
       </article>
       <p v-if="loading && (!streaming || !messages.at(-1)?.content)" class="thinking" role="status">
         正在分析你的问题…
@@ -45,6 +46,7 @@
   </section>
 </template>
 <script setup>
+import MarkdownContent from '@/components/MarkdownContent.vue'
 import { ref, nextTick, watch, onBeforeUnmount } from 'vue'
 import axios from '@/axios'
 import { streamChat } from '@/utils/streamChat'

@@ -26,13 +26,13 @@
         <p v-if="error" class="error-banner" role="alert">{{ error }}</p>
         <p v-if="notice" class="notice-banner" role="status">{{ notice }}</p>
         <p v-if="loading" class="empty-state">正在加载文献…</p>
-        <div v-else-if="!documents.length" class="empty-state">
+        <div v-else-if="!error && !documents.length" class="empty-state">
           <el-icon><FolderOpened /></el-icon>
           <h3>建立你的知识库</h3>
           <p>上传 PDF 后可直接提问，也可将资料用于协作研究。</p>
           <button class="secondary-button" @click="openUpload">上传第一篇文献</button>
         </div>
-        <div v-else class="document-list">
+        <div v-else-if="documents.length" class="document-list">
           <article
             v-for="doc in filtered"
             :key="doc.id"

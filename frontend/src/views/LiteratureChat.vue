@@ -12,39 +12,45 @@
       </div>
       <button @click="resetChat" class="reset-btn">重置对话</button>
     </div>
-    
+
     <div class="messages" ref="messagesContainer">
-      <div v-for="(msg, idx) in messages" :key="idx" 
-           :class="['message', msg.role]">
+      <div v-for="(msg, idx) in messages" :key="idx" :class="['message', msg.role]">
         <div class="avatar">{{ msg.role === 'user' ? '👤' : '📚' }}</div>
-        <div class="content">{{ msg.content }}</div>
+        <div class="content">
+          <MarkdownContent v-if="msg.role === 'assistant'" :content="msg.content" /><span v-else>{{
+            msg.content
+          }}</span>
+        </div>
       </div>
       <div v-if="loading" class="message assistant">
         <div class="avatar">📚</div>
         <div class="content typing">正在检索文献...</div>
       </div>
     </div>
-    
+
     <div class="input-area">
-      <textarea 
-        v-model="inputMessage" 
+      <textarea
+        v-model="inputMessage"
         @keydown.enter.prevent="sendMessage"
         placeholder="输入你的问题，例如：帮我找一下关于深度学习的文献..."
         rows="2"
       ></textarea>
-      <button @click="sendMessage" :disabled="!inputMessage || loading">
-        发送
-      </button>
+      <button @click="sendMessage" :disabled="!inputMessage || loading">发送</button>
     </div>
   </div>
 </template>
 
 <script setup>
+import MarkdownContent from '@/components/MarkdownContent.vue'
 import { ref, onMounted, nextTick } from 'vue'
 import axios from '../axios'
 
 const messages = ref([
-  { role: 'assistant', content: '你好！我是文献助手。请先在上方"文献库管理"上传PDF文献，然后我可以帮你：\n- 检索文献中的相关内容\n- 总结指定文献\n- 回答关于文献的问题' }
+  {
+    role: 'assistant',
+    content:
+      '你好！我是文献助手。请先在上方"文献库管理"上传PDF文献，然后我可以帮你：\n- 检索文献中的相关内容\n- 总结指定文献\n- 回答关于文献的问题',
+  },
 ])
 const inputMessage = ref('')
 const loading = ref(false)
@@ -60,30 +66,29 @@ const scrollToBottom = async () => {
 
 const sendMessage = async () => {
   if (!inputMessage.value.trim() || loading.value) return
-  
+
   const userMessage = inputMessage.value
   messages.value.push({ role: 'user', content: userMessage })
   inputMessage.value = ''
   scrollToBottom()
-  
+
   loading.value = true
-  
+
   try {
     const response = await axios.post('/literature/chat/', {
       message: userMessage,
-      conversation_id: conversationId.value
+      conversation_id: conversationId.value,
     })
-    
-    messages.value.push({ 
-      role: 'assistant', 
-      content: response.data.response 
+
+    messages.value.push({
+      role: 'assistant',
+      content: response.data.response,
     })
-    
   } catch (error) {
     console.error('文献助手出错:', error)
-    messages.value.push({ 
-      role: 'assistant', 
-      content: '抱歉，我遇到了一些问题。请检查：\n1. 是否已上传文献\n2. 后端服务是否正常' 
+    messages.value.push({
+      role: 'assistant',
+      content: '抱歉，我遇到了一些问题。请检查：\n1. 是否已上传文献\n2. 后端服务是否正常',
     })
   } finally {
     loading.value = false
@@ -94,9 +99,7 @@ const sendMessage = async () => {
 const resetChat = async () => {
   try {
     await axios.post('/literature/reset/')
-    messages.value = [
-      { role: 'assistant', content: '对话已重置！有什么可以帮你的？' }
-    ]
+    messages.value = [{ role: 'assistant', content: '对话已重置！有什么可以帮你的？' }]
     conversationId.value = null
   } catch (error) {
     console.error('重置失败', error)
@@ -134,7 +137,7 @@ onMounted(() => {
   top: 15px;
   left: 15px;
   padding: 5px 12px;
-  background-color: rgba(255,255,255,0.2);
+  background-color: rgba(255, 255, 255, 0.2);
   color: white;
   border: 1px solid white;
   border-radius: 4px;
@@ -147,7 +150,7 @@ onMounted(() => {
 }
 
 .back-btn:hover {
-  background-color: rgba(255,255,255,0.3);
+  background-color: rgba(255, 255, 255, 0.3);
   transform: translateX(-2px);
 }
 
@@ -175,7 +178,7 @@ onMounted(() => {
   right: 15px;
   top: 15px;
   padding: 5px 12px;
-  background-color: rgba(255,255,255,0.2);
+  background-color: rgba(255, 255, 255, 0.2);
   color: white;
   border: 1px solid white;
   border-radius: 4px;

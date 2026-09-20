@@ -25,18 +25,26 @@
           placeholder="搜索数据集"
         />
         <p v-if="listLoading" class="empty-state">正在加载…</p>
-        <button
-          v-for="ds in filteredDatasets"
-          :key="ds.id"
-          class="dataset-choice"
-          :class="{ active: selectedDataset?.id === ds.id }"
-          :disabled="busy"
-          @click="selectDataset(ds)"
-        >
-          <strong>{{ ds.name }}</strong
-          ><small>{{ ds.row_count }} 行 × {{ ds.column_count }} 列</small
-          ><small>{{ formatDate(ds.uploaded_at) }}</small>
-        </button>
+        <div v-for="ds in filteredDatasets" :key="ds.id" class="dataset-row">
+          <button
+            class="dataset-choice"
+            :class="{ active: selectedDataset?.id === ds.id }"
+            :disabled="busy"
+            @click="selectDataset(ds)"
+          >
+            <strong>{{ ds.name }}</strong
+            ><small>{{ ds.row_count }} 行 × {{ ds.column_count }} 列</small
+            ><small>{{ formatDate(ds.uploaded_at) }}</small>
+          </button>
+          <button
+            class="text-button danger-text dataset-delete"
+            :aria-label="'删除数据集 ' + ds.name"
+            :disabled="busy"
+            @click="deleteDataset(ds)"
+          >
+            {{ deletingId === ds.id ? '删除中…' : '删除' }}
+          </button>
+        </div>
         <p v-if="!listLoading && !filteredDatasets.length" class="empty-state">
           {{ datasets.length ? '没有匹配的数据集' : '还没有数据集，上传文件开始分析。' }}
         </p>
@@ -89,7 +97,7 @@
           </div>
           <p v-if="analyzing" class="thinking">正在分析数据…</p>
           <template v-else-if="analysisResult"
-            ><p class="report-text">{{ analysisResult.insight }}</p>
+            ><MarkdownContent class="report-text" :content="analysisResult.insight" />
             <details>
               <summary>查看完整统计结果</summary>
               <pre class="result-json">{{ JSON.stringify(analysisResult.result, null, 2) }}</pre>
@@ -186,12 +194,14 @@
   </main>
 </template>
 <script setup>
+import MarkdownContent from '@/components/MarkdownContent.vue'
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import axios from '../axios'
 import * as echarts from 'echarts/core'
 import { BarChart, LineChart, ScatterChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, GridComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
+import { ElMessageBox } from 'element-plus'
 import ResearchConversation from '@/components/ResearchConversation.vue'
 import { apiError } from '@/utils/apiError'
 echarts.use([
@@ -219,7 +229,11 @@ const pageError = ref(''),
 const filteredDatasets = computed(() =>
   datasets.value.filter((ds) => ds.name.toLowerCase().includes(search.value.toLowerCase())),
 )
-const busy = computed(() => detailLoading.value || analyzing.value || generatingChart.value)
+const deletingId = ref(null)
+const busy = computed(
+  () =>
+    detailLoading.value || analyzing.value || generatingChart.value || deletingId.value !== null,
+)
 let resizeObserver
 const disposeChart = () => {
   resizeObserver?.disconnect()
@@ -266,6 +280,41 @@ const fetchDatasets = async () => {
     pageError.value = apiError(error, '数据集加载失败')
   } finally {
     listLoading.value = false
+  }
+}
+
+const deleteDataset = async (dataset) => {
+  if (busy.value) return
+  deletingId.value = dataset.id
+  try {
+    await ElMessageBox.confirm(
+      `删除“${dataset.name}”及其分析结果和图表？此操作无法撤销。`,
+      '删除数据集',
+      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' },
+    )
+  } catch {
+    deletingId.value = null
+    return
+  }
+  pageError.value = ''
+  try {
+    await axios.delete(`/datasets/${dataset.id}/delete/`)
+    datasets.value = datasets.value.filter((item) => item.id !== dataset.id)
+    if (selectedDataset.value?.id === dataset.id) {
+      disposeChart()
+      selectedDataset.value = null
+      analysisResult.value = null
+      chartData.value = null
+      previewData.value = []
+      previewColumns.value = []
+      columns.value = []
+      vizConfig.value.xColumn = ''
+      vizConfig.value.yColumn = ''
+    }
+  } catch (error) {
+    pageError.value = apiError(error, '删除失败，数据集已保留')
+  } finally {
+    deletingId.value = null
   }
 }
 

@@ -14,7 +14,7 @@ class AnalysisStreamTests(TestCase):
         import pandas as pd
         load.return_value = pd.DataFrame({'score':[1,2,3]})
         build.return_value.stream_chat.return_value = iter(['analysis', ' result'])
-        request = APIRequestFactory().post('/agent/', {'message':'interpret', 'stream':True}, format='json')
+        request = APIRequestFactory().post('/agent/', {'message':'interpret', 'stream':True}, format='json', HTTP_ACCEPT='text/event-stream, application/json')
         force_authenticate(request, user=user)
         response = AnalysisAgentChatView.as_view()(request, dataset_id=dataset.pk)
         self.assertTrue(response.streaming)

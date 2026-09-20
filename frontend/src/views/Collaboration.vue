@@ -81,7 +81,7 @@
           {{ item.name }}
         </button>
       </div>
-      <div class="report-text">{{ resultText }}</div>
+      <MarkdownContent class="report-text" :content="resultText" />
     </section>
     <section v-else-if="!loading" class="research-guide">
       <div>
@@ -103,6 +103,7 @@
   </main>
 </template>
 <script setup>
+import MarkdownContent from '@/components/MarkdownContent.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from '@/axios'

@@ -1,6 +1,9 @@
 // POST SSE supports authentication and incremental UTF-8 decoding.
 export async function streamChat(endpoint, payload, onEvent, signal) {
-  const headers = { 'Content-Type': 'application/json', Accept: 'text/event-stream' }
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'text/event-stream, application/json',
+  }
   const token = localStorage.getItem('access')
   if (token) headers.Authorization = `Bearer ${token}`
   const response = await fetch('/api' + endpoint, {
