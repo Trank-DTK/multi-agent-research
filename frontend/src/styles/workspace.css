@@ -14,7 +14,8 @@
   margin-bottom: 24px;
 }
 .section-title h1 {
-  font-size: 28px;
+  font-size: 30px;
+  font-weight: 650;
   margin: 6px 0 10px;
   letter-spacing: -0.6px;
 }
@@ -35,11 +36,12 @@
   font-weight: 650;
 }
 .panel {
-  background: var(--bg-secondary);
+  background:
+    linear-gradient(135deg, var(--surface-highlight), transparent 50%), var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 18px;
   padding: 24px;
-  box-shadow: 0 3px 14px #153d7110;
+  box-shadow: var(--surface-shadow);
 }
 .panel h2 {
   font-size: 17px;
@@ -57,18 +59,24 @@
   background: var(--bg-secondary);
   color: var(--text-primary);
   padding: 11px 17px;
+  transition:
+    background-color 0.18s,
+    border-color 0.18s,
+    box-shadow 0.18s,
+    filter 0.18s;
   border-radius: 10px;
   font-size: 13px;
   white-space: nowrap;
 }
 .primary-button {
-  background: #326bd6;
-  border-color: #326bd6;
+  background: var(--accent-gradient);
+  border-color: #3979dc;
+  box-shadow: 0 4px 12px #2567d620;
   color: #fff;
   font-weight: 600;
 }
 .primary-button:hover {
-  background: #245bb5;
+  filter: brightness(1.08);
 }
 .secondary-button:hover,
 .row-actions button:hover {
@@ -384,6 +392,7 @@
   gap: 16px;
   padding: 20px 24px;
   border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(110deg, var(--accent-soft), transparent 70%);
 }
 .conversation-toolbar h2 {
   font-size: 16px;
@@ -409,16 +418,18 @@
   display: block;
   font-size: 11px;
   color: var(--text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
 }
 .research-message > div {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.9;
-  font-size: 13px;
-  padding: 15px 18px;
-  border-radius: 13px;
-  background: var(--bg-primary);
+  font-size: 14px;
+  padding: 17px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--input-surface);
 }
 .research-message.user {
   margin-left: 15%;
@@ -438,9 +449,9 @@
   min-height: 70px;
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 13px;
-  font-size: 13px;
-  background: var(--bg-primary);
+  padding: 15px;
+  font-size: 14px;
+  background: var(--input-surface);
   color: var(--text-primary);
 }
 .composer-bottom {
@@ -639,10 +650,11 @@
   margin-bottom: 20px;
 }
 .metric-card {
-  padding: 20px;
-  background: var(--bg-secondary);
+  padding: 22px;
+  background: linear-gradient(135deg, var(--accent-soft), transparent 65%), var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 13px;
+  border-radius: 15px;
+  box-shadow: var(--surface-shadow);
 }
 .metric-card small {
   display: block;
@@ -894,10 +906,10 @@
   margin-bottom: 0;
 }
 .workspace-shell {
-  --chat-border-color: #7da6e4;
+  --chat-border-color: #b8ceec;
 }
 .dark .workspace-shell {
-  --chat-border-color: #365f99;
+  --chat-border-color: #29476f;
 }
 @media (max-width: 1100px) {
   #app .register-container.register-layout {
@@ -965,5 +977,86 @@
 @keyframes creation-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Shared finish for task surfaces; no visual overlays over reading content. */
+.workspace-shell
+  :is(
+    .full-search,
+    .settings-form input,
+    .settings-form select,
+    .research-brief textarea,
+    .conversation-composer textarea
+  ) {
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s;
+}
+.workspace-shell
+  :is(
+    .full-search,
+    .settings-form input,
+    .settings-form select,
+    .research-brief textarea,
+    .conversation-composer textarea
+  ):focus {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px #4488ef15;
+}
+.workspace-shell :is(.task-button, .dataset-choice, .library-document) {
+  transition:
+    border-color 0.18s,
+    background-color 0.18s;
+}
+.workspace-shell :is(.task-button, .dataset-choice, .library-document):hover {
+  border-color: var(--accent-line);
+}
+.workspace-shell .empty-state > .el-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 0 32px var(--ambient-glow);
+  font-size: 30px;
+}
+.workspace-shell .eyebrow {
+  font-family: 'Cascadia Code', Consolas, monospace;
+  letter-spacing: 2.4px;
+}
+.workspace-shell .metric-card strong {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+.workspace-shell .preview-table th {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.workspace-shell .preview-table tbody tr:hover {
+  background: var(--accent-soft);
+}
+.workspace-shell .paper-list,
+.workspace-shell .editor-area,
+.workspace-shell .empty-editor {
+  box-shadow: var(--surface-shadow);
+}
+.workspace-shell .research-message.assistant .message-role::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 7px;
+  background: var(--accent-line);
+  box-shadow: 0 0 8px #4488ef40;
+}
+@media (max-width: 600px) {
+  .research-message > div {
+    font-size: 13px;
+    padding: 14px;
+  }
+  .metric-card {
+    padding: 16px;
   }
 }

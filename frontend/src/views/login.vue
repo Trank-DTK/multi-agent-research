@@ -1,338 +1,90 @@
 <template>
-  <div class="login-container">
-    <div class="login-header">
-      <div class="logo-section">
-        <div class="logo">🔬</div>
-        <div class="title">
-          <h1>多智能体科研协作平台</h1>
-          <p class="subtitle">AI驱动的智能科研助手</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="login-content">
-      <h2>用户登录</h2>
-      <form @submit.prevent="handleLogin">
-        <div class="form-group">
+  <AuthShell title="欢迎回来" description="继续你的探索，让研究向前一步。">
+    <form :aria-busy="loading" @submit.prevent="handleLogin">
+      <label class="auth-field"
+        ><span>用户名</span
+        ><input
+          v-model="username"
+          type="text"
+          placeholder="输入用户名"
+          required
+          autocomplete="username"
+          :disabled="loading"
+      /></label>
+      <div class="auth-field">
+        <label for="login-password">密码</label>
+        <span class="password-wrap">
           <input
-            v-model="username"
-            type="text"
-            placeholder="用户名"
-            aria-label="用户名"
-            required
-            autocomplete="username"
-          />
-        </div>
-
-        <div class="form-group">
-          <input
+            id="login-password"
             v-model="password"
-            type="password"
-            placeholder="密码"
-            aria-label="密码"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="输入密码"
             required
             autocomplete="current-password"
+            :disabled="loading"
           />
-        </div>
-
-        <button type="submit" :disabled="loading">
-          {{ loading ? '登录中...' : '登录' }}
-        </button>
-      </form>
-
-      <p v-if="error" class="error" role="alert">{{ error }}</p>
-
-      <router-link to="/register" class="register-link">还没有账号？立即注册</router-link>
-
-      <div class="login-features">
-        <h3>平台特色功能</h3>
-        <div class="features-grid">
-          <div class="feature-item">
-            <span class="feature-icon">🤖</span>
-            <span class="feature-text">多智能体协作研究</span>
-          </div>
-          <div class="feature-item">
-            <span class="feature-icon">📚</span>
-            <span class="feature-text">文献智能管理</span>
-          </div>
-          <div class="feature-item">
-            <span class="feature-icon">📊</span>
-            <span class="feature-text">数据分析可视化</span>
-          </div>
-          <div class="feature-item">
-            <span class="feature-icon">✍️</span>
-            <span class="feature-text">AI辅助论文写作</span>
-          </div>
-        </div>
+          <button
+            type="button"
+            :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+            :aria-pressed="showPassword"
+            @click="showPassword = !showPassword"
+          >
+            <svg aria-hidden="true"><use href="#public-eye" /></svg>
+          </button>
+        </span>
       </div>
-    </div>
-  </div>
+      <p v-if="error" class="auth-error" role="alert">{{ error }}</p>
+      <button
+        type="submit"
+        class="button button-blue auth-submit"
+        :class="{ busy: loading }"
+        :disabled="loading"
+      >
+        <span>{{ loading ? '正在登录…' : '登录并进入工作台' }}</span
+        ><svg aria-hidden="true"><use href="#public-arrow" /></svg>
+      </button>
+    </form>
+    <template #footer>还没有账户？<RouterLink to="/register">创建新账户 ↗</RouterLink></template>
+  </AuthShell>
 </template>
-
 <script setup>
-import { ref } from 'vue'
+import { ref, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from '../axios'
-
+import axios from '@/axios'
+import AuthShell from '@/components/AuthShell.vue'
+import { saveSessionTokens } from '@/utils/auth'
+defineOptions({ name: 'LoginPage' })
 const router = useRouter()
-const username = ref('')
-const password = ref('')
-const loading = ref(false)
-const error = ref('')
-
+const username = ref(''),
+  password = ref(''),
+  showPassword = ref(false)
+const loading = ref(false),
+  error = ref('')
+let controller
+onBeforeUnmount(() => controller?.abort())
 const handleLogin = async () => {
-  if (!username.value || !password.value) {
+  if (loading.value) return
+  if (!username.value.trim() || !password.value) {
     error.value = '请输入用户名和密码'
     return
   }
-
   loading.value = true
   error.value = ''
-
+  controller = new AbortController()
   try {
-    const response = await axios.post('/auth/login/', {
-      username: username.value,
-      password: password.value,
-    })
-
-    // 保存token
-    localStorage.setItem('access', response.data.access)
-    localStorage.setItem('refresh', response.data.refresh)
-
-    // 跳转到仪表盘
-    router.push('/dashboard')
+    const response = await axios.post(
+      '/auth/login/',
+      { username: username.value.trim(), password: password.value },
+      { signal: controller.signal },
+    )
+    if (controller.signal.aborted) return
+    saveSessionTokens(response.data)
+    await router.replace('/dashboard')
   } catch (err) {
-    if (err.response?.status === 401) {
-      error.value = '用户名或密码错误'
-    } else {
-      error.value = '登录失败，请稍后重试'
-    }
+    if (controller.signal.aborted) return
+    error.value = err.response?.status === 401 ? '用户名或密码错误' : '登录失败，请稍后重试'
   } finally {
     loading.value = false
   }
 }
 </script>
-
-<style scoped>
-.login-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 60px 24px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--bg-primary);
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.logo-section {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.logo {
-  font-size: 64px;
-  background: linear-gradient(135deg, var(--success-color) 0%, #36a1ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.title h1 {
-  font-size: 36px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: var(--text-primary);
-  background: linear-gradient(135deg, var(--success-color) 0%, #36a1ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.subtitle {
-  font-size: 16px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.login-content {
-  max-width: 480px;
-  margin: 0 auto;
-  background: white;
-  border: 1px solid var(--border-color);
-  border-radius: 24px;
-  padding: 40px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-}
-
-.login-content h2 {
-  text-align: center;
-  margin-bottom: 32px;
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.form-group {
-  margin-bottom: 24px;
-}
-
-input {
-  width: 100%;
-  padding: 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  font-size: 16px;
-  box-sizing: border-box;
-  transition: all 0.3s ease;
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-input:focus {
-  outline: none;
-  border-color: var(--success-color);
-  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
-  background: white;
-}
-
-input::placeholder {
-  color: var(--text-tertiary);
-}
-
-button {
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, var(--success-color) 0%, #36a1ff 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 8px;
-}
-
-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(24, 144, 255, 0.3);
-}
-
-button:disabled {
-  background: var(--border-color);
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.error {
-  color: #f44336;
-  margin-top: 20px;
-  padding: 12px;
-  background-color: #ffebee;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 14px;
-}
-
-.register-link {
-  display: block;
-  margin-top: 24px;
-  text-align: center;
-  color: var(--success-color);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 15px;
-  transition: color 0.3s ease;
-}
-
-.register-link:hover {
-  text-decoration: underline;
-  color: #36a1ff;
-}
-
-.login-features {
-  margin-top: 40px;
-  padding-top: 32px;
-  border-top: 1px solid var(--border-color);
-}
-
-.login-features h3 {
-  text-align: center;
-  margin-bottom: 24px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.feature-item:hover {
-  background: var(--bg-tertiary);
-  transform: translateY(-2px);
-}
-
-.feature-icon {
-  font-size: 20px;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--success-color) 0%, #36a1ff 100%);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.feature-text {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-@media (max-width: 768px) {
-  .login-container {
-    padding: 40px 20px;
-  }
-
-  .logo-section {
-    gap: 16px;
-  }
-
-  .logo {
-    font-size: 48px;
-  }
-
-  .title h1 {
-    font-size: 28px;
-  }
-
-  .login-content {
-    padding: 32px 24px;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

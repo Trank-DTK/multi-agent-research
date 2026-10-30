@@ -1,45 +1,75 @@
 @import 'element-plus/theme-chalk/dark/css-vars.css';
 :root {
-  --bg-primary: #f3f6fb;
-  --bg-secondary: #fff;
-  --bg-tertiary: #edf2fa;
-  --text-primary: #20314d;
-  --text-secondary: #64748b;
-  --text-tertiary: #8a99ad;
-  --border-color: #e1e7f0;
-  --card-shadow: 0 8px 24px #20477b10;
-  --header-bg: #245bb5;
+  color-scheme: light;
+  --nav-width: 248px;
+  --bg-primary: #f3f6fc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #eaf0f9;
+  --text-primary: #172b48;
+  --text-secondary: #5b6f8c;
+  --text-tertiary: #70839e;
+  --border-color: #dce5f2;
+  --card-shadow: 0 8px 32px #1c3e7310;
+  --surface-shadow: 0 6px 24px #16396b08, 0 1px 3px #16396b05;
+  --surface-highlight: #ffffff;
+  --nav-surface: #f9fbffed;
+  --input-surface: #f5f8fd;
+  --accent-gradient: linear-gradient(120deg, #2867d6, #2059bf);
+  --accent-line: #4488ef;
+  --ambient-glow: #387fff0b;
+  --header-bg: #1757b9;
   --header-text: #fff;
-  --success-color: #326bd6;
-  --accent-soft: #e8f0ff;
-  --warning-color: #b97a25;
-  --error-color: #cb4d4d;
-  --info-color: #427aad;
-  --el-color-primary: #326bd6;
+  --success-color: #2867ce;
+  --accent-soft: #eaf2ff;
+  --warning-color: #a66a14;
+  --error-color: #c63f51;
+  --info-color: #3e6fa8;
+  --el-color-primary: #2867ce;
+  --el-border-color: var(--border-color);
+  --el-border-radius-base: 10px;
 }
 .dark {
   color-scheme: dark;
-  --bg-primary: #101a2b;
-  --bg-secondary: #18253a;
-  --bg-tertiary: #22334d;
-  --text-primary: #e6edf8;
-  --text-secondary: #b2bfd3;
-  --text-tertiary: #8e9eb8;
-  --border-color: #32425d;
-  --card-shadow: 0 8px 24px #0003;
-  --header-bg: #245bb5;
+  --bg-primary: #070c16;
+  --bg-secondary: #0e1828;
+  --bg-tertiary: #17263d;
+  --text-primary: #e8effb;
+  --text-secondary: #a4b5cf;
+  --text-tertiary: #8096b7;
+  --border-color: #24334a;
+  --card-shadow: 0 12px 36px #00000030;
+  --surface-shadow: 0 8px 32px #00000024, inset 0 1px 0 #c0dcff05;
+  --surface-highlight: #d9ecff05;
+  --nav-surface: #0c1626f5;
+  --input-surface: #0b1627;
+  --accent-gradient: linear-gradient(120deg, #2c6bd7, #225cc4);
+  --accent-line: #478cf4;
+  --ambient-glow: #3275e90d;
+  --header-bg: #1d5cc0;
   --header-text: #fff;
-  --success-color: #83b3ff;
-  --accent-soft: #223d63;
-  --el-color-primary: #83b3ff;
+  --success-color: #8abaff;
+  --accent-soft: #152e50;
+  --warning-color: #e3b266;
+  --error-color: #fa8d9b;
+  --info-color: #91b5e2;
+  --el-color-primary: #72a7fa;
+  --el-bg-color: #0e1828;
+  --el-bg-color-overlay: #142239;
+  --el-fill-color-blank: #0e1828;
+  --el-text-color-primary: #e8effb;
+  --el-text-color-regular: #a4b5cf;
 }
+
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
-  background: var(--bg-primary);
+  background:
+    radial-gradient(ellipse at 75% 0%, var(--ambient-glow), transparent 55%), var(--bg-primary);
+  background-attachment: fixed;
   color: var(--text-primary);
+  font-size: 14px;
   font-family:
     Inter,
     -apple-system,
@@ -76,7 +106,7 @@ button {
   cursor: pointer;
 }
 .workspace-shell > .route-content {
-  margin-left: 232px;
+  margin-left: var(--nav-width);
   min-width: 0;
 }
 #app .workspace-shell .page-header {
@@ -110,7 +140,7 @@ button {
 .workspace-shell .document-card,
 .workspace-shell .chat-container {
   background: var(--bg-secondary);
-  border-radius: 12px;
+  border-radius: 18px;
 }
 .workspace-shell .modal {
   z-index: 200;
@@ -152,7 +182,9 @@ button {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 18px;
-  box-shadow: var(--card-shadow);
+  box-shadow:
+    var(--card-shadow),
+    inset 0 1px 0 var(--surface-highlight);
 }
 #app .login-content h2,
 #app .register-content h2 {
@@ -225,5 +257,46 @@ button {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+::selection {
+  background: #448af43d;
+}
+input,
+textarea,
+select {
+  accent-color: var(--success-color);
+}
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+#app .login-content,
+#app .register-content {
+  background:
+    linear-gradient(145deg, var(--surface-highlight), transparent 45%), var(--bg-secondary);
+}
+#app .login-content input,
+#app .register-content input {
+  background: var(--input-surface);
+}
+#app .login-content button[type='submit'],
+#app .register-content button[type='submit'] {
+  background: var(--accent-gradient);
+  box-shadow: 0 6px 18px #2567d625;
+  border-radius: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

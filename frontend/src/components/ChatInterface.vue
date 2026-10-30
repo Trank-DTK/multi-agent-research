@@ -35,7 +35,7 @@
             :disabled="loading || conversationLoading"
             aria-label="删除对话"
           >
-            🗑️
+            <el-icon><Delete /></el-icon>
           </button>
         </div>
         <div v-if="conversations.length === 0" class="empty-list">暂无历史对话</div>
@@ -56,12 +56,17 @@
 
       <div class="messages" ref="messagesContainer">
         <div v-if="!messages.length && !loading" class="chat-empty">
-          <el-icon><ChatDotRound /></el-icon>
+          <div class="dialogue-emblem" aria-hidden="true">
+            <span class="emblem-orbit"></span><el-icon><Connection /></el-icon>
+          </div>
+          <span class="chat-eyebrow">RESEARCH DIALOGUE</span>
           <h2>一起探索你的研究问题</h2>
           <p>讨论一个想法、梳理实验思路，或请助手解释一个概念。</p>
         </div>
         <div v-for="(msg, index) in messages" :key="index" :class="['message', msg.role]">
-          <div class="avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
+          <div class="avatar" :aria-label="msg.role === 'user' ? '你' : '研究助手'">
+            <el-icon><User v-if="msg.role === 'user'" /><Cpu v-else /></el-icon>
+          </div>
           <div class="content">
             <MarkdownContent v-if="msg.role === 'assistant'" :content="msg.content" /><span
               v-else
@@ -70,7 +75,9 @@
           </div>
         </div>
         <div v-if="loading && !messages.at(-1)?.content" class="message assistant">
-          <div class="avatar">🤖</div>
+          <div class="avatar" aria-label="研究助手">
+            <el-icon><Cpu /></el-icon>
+          </div>
           <div class="content typing">正在输入...</div>
         </div>
       </div>
@@ -268,21 +275,22 @@ onMounted(() => {
   display: flex;
   height: 600px;
   border: 1px solid var(--chat-border-color);
-  border-radius: 8px;
+  border-radius: 20px;
+  box-shadow: var(--surface-shadow);
   overflow: hidden;
   position: relative;
 }
 
 .sidebar {
   width: 260px;
-  background-color: var(--bg-primary);
+  background: linear-gradient(180deg, var(--accent-soft), transparent 180px), var(--input-surface);
   border-right: 1px solid var(--chat-border-color);
   display: flex;
   flex-direction: column;
 }
 
 .sidebar-header {
-  padding: 15px;
+  padding: 20px 16px;
   border-bottom: 1px solid var(--chat-border-color);
   display: flex;
   justify-content: space-between;
@@ -291,15 +299,17 @@ onMounted(() => {
 
 .sidebar-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
 }
 
 .new-chat-btn {
   padding: 5px 10px;
-  background-color: #326bd6;
+  background: var(--accent-gradient);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 9px;
   cursor: pointer;
   font-size: 12px;
 }
@@ -314,7 +324,7 @@ onMounted(() => {
   padding: 10px;
   margin-bottom: 5px;
   background-color: var(--bg-secondary);
-  border-radius: 4px;
+  border-radius: 9px;
   cursor: pointer;
   position: relative;
   display: flex;
@@ -343,18 +353,25 @@ onMounted(() => {
 
 .conv-time {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .delete-btn {
   position: absolute;
   top: 10px;
   right: 10px;
+  color: var(--text-tertiary);
+  padding: 4px;
   background: none;
   border: none;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.2s;
+}
+
+.delete-btn:hover,
+.delete-btn:focus-visible {
+  color: var(--error-color);
 }
 
 .conversation-item:hover .delete-btn {
@@ -363,7 +380,7 @@ onMounted(() => {
 
 .empty-list {
   text-align: center;
-  color: #999;
+  color: var(--text-tertiary);
   padding: 20px;
 }
 
@@ -383,17 +400,17 @@ onMounted(() => {
   left: 10px;
   z-index: 10;
   padding: 5px 10px;
-  background-color: #326bd6;
+  background: var(--accent-gradient);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 9px;
   cursor: pointer;
 }
 
 .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 28px clamp(16px, 3vw, 42px);
 }
 
 .message {
@@ -408,7 +425,7 @@ onMounted(() => {
 .message.user .content {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  background-color: #326bd6;
+  background: var(--accent-gradient);
   color: white;
   margin-left: 10px;
 }
@@ -428,24 +445,27 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  background-color: #f0f0f0;
+  background: var(--accent-soft);
+  color: var(--success-color);
+  border: 1px solid var(--border-color);
 }
 
 .content {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  max-width: 70%;
+  max-width: 82%;
   padding: 10px 15px;
-  border-radius: 18px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  border: 1px solid var(--border-color);
   line-height: 1.5;
   word-wrap: break-word;
 }
 
 .input-area {
   display: flex;
-  padding: 15px;
-  background-color: var(--bg-secondary);
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(180deg, transparent, var(--accent-soft));
   border-top: 1px solid var(--chat-border-color);
 }
 
@@ -453,28 +473,33 @@ textarea {
   flex: 1;
   padding: 10px;
   border: 1px solid var(--chat-border-color);
-  border-radius: 4px;
+  border-radius: 9px;
   resize: none;
-  margin-right: 10px;
+  margin-right: 0;
+  background: var(--input-surface);
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s;
   font-family: inherit;
 }
 
 button {
   padding: 0 20px;
-  background-color: #326bd6;
+  background: var(--accent-gradient);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 9px;
   cursor: pointer;
 }
 
 button:disabled {
-  background-color: #cccccc;
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
   cursor: not-allowed;
 }
 
 .typing {
-  color: #999;
+  color: var(--text-tertiary);
   font-style: italic;
 }
 
@@ -512,7 +537,8 @@ button:disabled {
   color: var(--success-color);
 }
 .chat-empty h2 {
-  font-size: 20px;
+  font-size: clamp(20px, 2vw, 26px);
+  letter-spacing: -0.03em;
   color: var(--text-primary);
 }
 .chat-empty p {
@@ -558,6 +584,93 @@ button:disabled {
   }
   .content {
     max-width: 85%;
+  }
+}
+
+.chat-eyebrow {
+  margin-top: 28px;
+  font:
+    10px Consolas,
+    monospace;
+  letter-spacing: 0.24em;
+  color: var(--success-color);
+}
+.dialogue-emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 26px;
+  border: 1px solid var(--chat-border-color);
+  background: linear-gradient(145deg, var(--accent-soft), var(--bg-secondary));
+  box-shadow:
+    0 10px 40px var(--ambient-glow),
+    inset 0 1px 0 var(--surface-highlight);
+}
+.dialogue-emblem > .el-icon {
+  font-size: 34px;
+}
+.emblem-orbit {
+  position: absolute;
+  inset: -11px;
+  border: 1px dashed var(--border-color);
+  border-radius: 34px;
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+.chat-empty h2 {
+  margin: 14px 0 0;
+}
+.chat-empty p {
+  max-width: 430px;
+}
+.message {
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.avatar {
+  flex-shrink: 0;
+  border-radius: 12px;
+}
+.message.assistant .content {
+  background: var(--input-surface);
+}
+.input-area textarea:focus {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px #4488ef14;
+}
+.conversation-item {
+  padding: 13px;
+  margin-bottom: 8px;
+}
+.conversation-item.active {
+  border-color: var(--accent-line);
+  box-shadow: inset 2px 0 0 var(--accent-line);
+}
+.new-chat-btn {
+  padding: 7px 10px;
+}
+@media (max-width: 600px) {
+  .messages {
+    padding: 56px 14px 18px;
+  }
+  .input-area {
+    padding: 12px;
+    gap: 8px;
+  }
+  .input-area > button {
+    padding: 0 14px;
+  }
+  .content {
+    max-width: calc(100% - 48px);
+    padding: 12px;
+  }
+  .dialogue-emblem {
+    width: 72px;
+    height: 72px;
+    border-radius: 22px;
   }
 }
 </style>

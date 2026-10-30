@@ -90,7 +90,11 @@
         <div class="sections">
           <div v-for="section in sections" :key="section.id" class="section-card">
             <div class="section-header">
-              <input v-model="section.title" class="section-title" @blur="saveSection(section)" />
+              <input
+                v-model="section.title"
+                class="section-title-input"
+                @blur="saveSection(section)"
+              />
               <button @click="polishSection(section)" class="polish-btn" :disabled="polishing">
                 润色
               </button>
@@ -598,6 +602,9 @@ button {
   color: white;
   padding: 12px 20px;
 }
+.abstract-area > .text-button {
+  justify-self: start;
+}
 .abstract-area {
   display: grid;
   gap: 12px;
@@ -626,7 +633,7 @@ textarea {
   background: var(--bg-secondary);
   font-size: 13px;
 }
-.section-title {
+.section-title-input {
   flex: 1;
 }
 .add-section {
@@ -715,13 +722,14 @@ textarea {
   .section-header {
     flex-wrap: wrap;
   }
-  .section-title {
+  .section-title-input {
     width: 100%;
   }
   .header-content {
     gap: 12px;
   }
   .title-input {
+    flex-basis: 100%;
     width: 100%;
   }
 }

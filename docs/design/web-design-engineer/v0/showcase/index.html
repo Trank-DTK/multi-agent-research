@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark" data-motion="full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="研知协作：连接文献、数据、智能体与论文写作的科研工作空间。"
+    />
+    <title>研知协作 · 让探索，越过边界</title>
+    <link rel="icon" href="assets/logo.ico" />
+    <link rel="stylesheet" href="showcase.css" />
+  </head>
+  <body>
+    <svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="arrow" viewBox="0 0 24 24">
+        <path d="M4 12h15M13 5l7 7-7 7" />
+      </symbol>
+      <symbol id="file" viewBox="0 0 24 24">
+        <path d="M14 3H5v18h14V8zM14 3v5h5M8 12h8m-8 4h6" />
+      </symbol>
+      <symbol id="network" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <circle cx="4" cy="4" r="2" />
+        <circle cx="20" cy="5" r="2" />
+        <circle cx="5" cy="20" r="2" />
+        <circle cx="20" cy="20" r="2" />
+        <path d="m6 6 4 4m4 0 4-4M10 14l-4 4m8-4 4 4" />
+      </symbol>
+      <symbol id="chart" viewBox="0 0 24 24">
+        <path d="M4 3v17h17M8 15v-4m5 4V6m5 9v6" />
+      </symbol>
+      <symbol id="pen" viewBox="0 0 24 24">
+        <path d="m4 16 12-12 4 4L8 20l-5 1zM13 7l4 4" />
+      </symbol>
+      <symbol id="spark" viewBox="0 0 24 24">
+        <path d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3z" />
+      </symbol>
+      <symbol id="sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path
+          d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1"
+        />
+      </symbol>
+      <symbol id="menu" viewBox="0 0 24 24">
+        <path d="M4 7h16M4 12h16M4 17h16" />
+      </symbol>
+      <symbol id="tune" viewBox="0 0 24 24">
+        <path d="M3 6h18M3 12h18M3 18h18" />
+        <circle cx="8" cy="6" r="2" />
+        <circle cx="16" cy="12" r="2" />
+        <circle cx="9" cy="18" r="2" />
+      </symbol>
+      <symbol id="eye" viewBox="0 0 24 24">
+        <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
+        <circle cx="12" cy="12" r="3" />
+      </symbol>
+    </svg>
+    <div class="progress-line" aria-hidden="true"></div>
+    <header class="site-header">
+      <a class="brand" href="#home" aria-label="研知协作首页"
+        ><span class="brand-emblem"
+          ><img src="assets/logo.ico" alt="研知协作 Logo" /></span
+        ><strong>研知协作<span>RESEARCH WORKSPACE</span></strong></a
+      >
+      <nav class="header-nav" aria-label="网站导航">
+        <a href="#capabilities" data-section="capabilities">探索能力</a
+        ><a href="#workspace" data-section="workspace">工作空间</a
+        ><a href="#workflow" data-section="workflow">研究流程</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button" id="theme-toggle" aria-label="切换明暗主题">
+          <svg><use href="#sun" /></svg></button
+        ><a href="#login" class="login-link">登录</a
+        ><a href="#register" class="button button-small button-white"
+          >开始探索 <svg><use href="#arrow" /></svg></a
+        ><button
+          class="icon-button mobile-menu-button"
+          id="mobile-menu-toggle"
+          aria-label="打开菜单"
+          aria-expanded="false"
+          aria-controls="mobile-menu"
+        >
+          <svg><use href="#menu" /></svg>
+        </button>
+      </div>
+    </header>
+    <nav id="mobile-menu" class="mobile-menu" aria-label="手机导航" hidden>
+      <a href="#capabilities" data-section="capabilities">探索能力</a
+      ><a href="#workspace" data-section="workspace">工作空间</a
+      ><a href="#workflow" data-section="workflow">研究流程</a
+      ><a href="#login">登录</a><a href="#register">创建账户</a>
+    </nav>
+    <main id="home-page">
+      <section class="hero" id="home">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="hero-scene" aria-hidden="true">
+          <canvas id="hero-field"></canvas>
+          <div class="scene-label label-evidence"><span></span>知识与证据</div>
+          <div class="scene-label label-reasoning"><span></span>协作与推理</div>
+          <div class="scene-label label-discovery"><span></span>探索与发现</div>
+          <div class="scene-fade"></div>
+        </div>
+        <div class="hero-content">
+          <div class="hero-eyebrow intro intro-one">
+            <span class="eyebrow-line"></span>让每一种可能，彼此连接
+          </div>
+          <h1>
+            <span class="title-line"><span>让探索，</span></span
+            ><span class="title-line"
+              ><span class="hero-accent">越过边界。</span></span
+            >
+          </h1>
+          <p class="hero-description intro intro-three">
+            从一个值得追问的问题，<br />到文献、数据与智能体共同抵达的答案。
+          </p>
+          <div class="hero-actions intro intro-four">
+            <a href="#register" class="button button-white button-large"
+              >开启我的研究空间 <svg><use href="#arrow" /></svg></a
+            ><a href="#workspace" class="text-link" data-section="workspace"
+              ><span class="play-disc">↗</span>看看它如何工作</a
+            >
+          </div>
+          <div class="hero-context intro intro-five">
+            <span>文献检索</span><i></i><span>多智能体协作</span><i></i
+            ><span>数据分析</span><i></i><span>论文写作</span>
+          </div>
+        </div>
+        <a class="scroll-cue" href="#capabilities" data-section="capabilities"
+          ><span class="scroll-track"><span></span></span
+          ><span>向下探索</span></a
+        >
+        <div class="hero-side-note" aria-hidden="true">
+          IDEAS BECOME DISCOVERIES
+        </div>
+      </section>
+      <section class="capability-section section-shell" id="capabilities">
+        <header class="section-heading reveal">
+          <span class="section-index">01 / 能力</span>
+          <h2>不止是回答。<br /><span>是让研究，向前一步。</span></h2>
+          <p>
+            把分散的工具，连接成一个连贯的研究空间。<br />你专注问题，智能助手参与每一个关键环节。
+          </p>
+        </header>
+        <div class="capability-list">
+          <a href="experience.html#documents" class="capability-row reveal"
+            ><div class="capability-number">01</div>
+            <div class="capability-icon">
+              <svg><use href="#file" /></svg>
+            </div>
+            <h3>从海量信息中，<br />找到值得相信的证据。</h3>
+            <p>
+              集中管理参考文献。围绕已上传资料提问，提取结论、比较方法，让每个观点有据可循。
+            </p>
+            <span class="round-arrow"
+              ><svg><use href="#arrow" /></svg></span
+          ></a>
+          <a href="experience.html#collaboration" class="capability-row reveal"
+            ><div class="capability-number">02</div>
+            <div class="capability-icon">
+              <svg><use href="#network" /></svg>
+            </div>
+            <h3>让不同的思考，<br />在同一个问题上交汇。</h3>
+            <p>
+              文献分析、实验设计与研究评审协同推进，把一个开放问题转化为可继续执行的研究方案。
+            </p>
+            <span class="round-arrow"
+              ><svg><use href="#arrow" /></svg></span
+          ></a>
+          <a href="experience.html#analysis" class="capability-row reveal"
+            ><div class="capability-number">03</div>
+            <div class="capability-icon">
+              <svg><use href="#chart" /></svg>
+            </div>
+            <h3>读懂数据，<br />也让想法被清晰表达。</h3>
+            <p>
+              预览与分析数据，生成可视化，再从大纲到章节组织论文，让发现逐步成为成果。
+            </p>
+            <span class="round-arrow"
+              ><svg><use href="#arrow" /></svg></span
+          ></a>
+        </div>
+      </section>
+      <section class="workspace-section" id="workspace">
+        <div class="section-shell">
+          <header class="workspace-heading reveal">
+            <div>
+              <span class="section-index">02 / 工作空间</span>
+              <h2>复杂留给研究。<br /><span>清晰，留在眼前。</span></h2>
+            </div>
+            <a href="experience.html" class="text-link"
+              >体验工作区预览 <svg><use href="#arrow" /></svg
+            ></a>
+          </header>
+          <div class="product-perspective reveal">
+            <div class="product-aura" aria-hidden="true"></div>
+            <a
+              href="experience.html"
+              class="product-window"
+              aria-label="打开工作区交互预览"
+              ><div class="window-bar">
+                <span class="window-dots"><i></i><i></i><i></i></span
+                ><span class="window-title">研知协作 / 科研工作台</span
+                ><span class="window-open">打开预览 ↗</span>
+              </div>
+              <img
+                src="assets/workspace.png"
+                width="1440"
+                height="1000"
+                loading="lazy"
+                alt="研知协作科研工作台，含研究流程与工具导航；截图使用界面验证数据" />
+              <div class="window-shine" aria-hidden="true"></div
+            ></a>
+          </div>
+          <div class="workspace-caption reveal">
+            <span>连接文献、数据与写作的同一个空间</span
+            ><small>真实页面组件截图 · 界面验证数据</small>
+          </div>
+        </div>
+      </section>
+      <section class="workflow-section section-shell" id="workflow">
+        <header class="section-heading reveal">
+          <span class="section-index">03 / 研究流程</span>
+          <h2>从灵感出发。<br /><span>每一步，都有所抵达。</span></h2>
+        </header>
+        <div class="journey-grid">
+          <article class="journey-step reveal">
+            <div class="journey-top">
+              <span>01</span><span class="journey-line"></span
+              ><svg><use href="#file" /></svg>
+            </div>
+            <h3>建立你的知识底座</h3>
+            <p>上传文献、整理资料，围绕问题积累研究证据。</p>
+            <a href="experience.html#documents"
+              >进入文献空间 <svg><use href="#arrow" /></svg
+            ></a>
+          </article>
+          <article class="journey-step reveal">
+            <div class="journey-top">
+              <span>02</span><span class="journey-line"></span
+              ><svg><use href="#network" /></svg>
+            </div>
+            <h3>让问题得到充分推演</h3>
+            <p>讨论假设、比较方法，借助智能体组织研究方案。</p>
+            <a href="experience.html#collaboration"
+              >探索协作研究 <svg><use href="#arrow" /></svg
+            ></a>
+          </article>
+          <article class="journey-step reveal">
+            <div class="journey-top">
+              <span>03</span><span class="journey-line"></span
+              ><svg><use href="#pen" /></svg>
+            </div>
+            <h3>把发现，写成成果</h3>
+            <p>分析数据、梳理论证，将研究进展转化为论文表达。</p>
+            <a href="experience.html#writing"
+              >打开写作空间 <svg><use href="#arrow" /></svg
+            ></a>
+          </article>
+        </div>
+      </section>
+      <section class="model-section section-shell">
+        <div class="model-layout reveal">
+          <div class="model-orbit" aria-hidden="true">
+            <div class="model-ring ring-one"></div>
+            <div class="model-ring ring-two"></div>
+            <div class="model-core">
+              <svg><use href="#spark" /></svg>
+            </div>
+            <span class="model-text-one">云端模型</span
+            ><span class="model-text-two">本地模型</span>
+          </div>
+          <div class="model-copy">
+            <span class="section-index">你的研究，你来选择</span>
+            <h2>智能，可以很强大。<br /><span>也可以由你定义。</span></h2>
+            <p>
+              连接你习惯的云端供应商，或使用本地模型。<br />配置自己的模型、API
+              Key 与服务地址。
+            </p>
+            <div class="provider-names">
+              <span>DeepSeek</span><span>OpenRouter</span><span>Qwen</span
+              ><span>OpenAI</span><span>Ollama</span><span>LM Studio</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="closing-section">
+        <div class="closing-glow" aria-hidden="true"></div>
+        <div class="section-shell closing-content reveal">
+          <span class="section-index">留一个空间，给下一次发现</span>
+          <h2>好问题，<br />值得一个更好的起点。</h2>
+          <a href="#register" class="button button-white button-large"
+            >开始我的下一步 <svg><use href="#arrow" /></svg></a
+          ><a href="experience.html" class="closing-preview"
+            >先体验工作区预览 ↗</a
+          >
+        </div>
+      </section>
+      <footer class="site-footer section-shell">
+        <a class="brand" href="#home"
+          ><span class="brand-emblem"><img src="assets/logo.ico" alt="" /></span
+          ><strong>研知协作<span>RESEARCH WORKSPACE</span></strong></a
+        >
+        <p>让知识彼此连接，让研究继续发生。</p>
+        <div class="footer-links">
+          <a href="#login">登录</a><a href="#register">注册</a
+          ><button type="button" data-open-tweaks>设计预览设置</button>
+        </div>
+      </footer>
+    </main>
+    <main class="auth-page" id="auth-page" hidden>
+      <div class="auth-scene" aria-hidden="true">
+        <canvas id="auth-field"></canvas>
+        <div class="auth-scene-fade"></div>
+      </div>
+      <div class="auth-layout">
+        <section class="auth-story">
+          <a class="back-link" href="#home">← 返回首页</a
+          ><span class="auth-kicker">属于你的科研空间</span>
+          <h1>让好奇心，<br /><span>有处安放。</span></h1>
+          <p>
+            文献中的线索，数据中的证据，<br />想法与想法之间，尚未发现的连接。
+          </p>
+          <div class="auth-story-bottom">
+            <span class="auth-line"></span><span>从这里，走向下一个发现。</span>
+          </div>
+        </section>
+        <section class="auth-card">
+          <div class="auth-card-top">
+            <span class="auth-icon"
+              ><svg><use href="#spark" /></svg></span
+            ><a href="experience.html" class="preview-link">仅体验工作区 ↗</a>
+          </div>
+          <div class="auth-heading">
+            <h2 id="auth-title">欢迎回来</h2>
+            <p id="auth-description">继续你的探索，让研究向前一步。</p>
+          </div>
+          <form id="auth-form" novalidate>
+            <label class="auth-field"
+              ><span>用户名</span
+              ><input
+                name="username"
+                type="text"
+                autocomplete="off"
+                placeholder="输入用户名，预览可留空"
+            /></label>
+            <label class="auth-field register-field" hidden
+              ><span>邮箱</span
+              ><input
+                name="email"
+                type="email"
+                autocomplete="off"
+                placeholder="输入邮箱"
+            /></label>
+            <label class="auth-field"
+              ><span>密码</span
+              ><span class="password-wrap"
+                ><input
+                  name="password"
+                  id="password"
+                  type="password"
+                  autocomplete="off"
+                  placeholder="输入密码，预览可留空" /><button
+                  type="button"
+                  id="toggle-password"
+                  aria-label="显示密码"
+                  aria-pressed="false"
+                >
+                  <svg><use href="#eye" /></svg></button></span
+            ></label>
+            <label class="auth-field register-field" hidden
+              ><span>确认密码</span
+              ><input
+                name="password2"
+                type="password"
+                autocomplete="off"
+                placeholder="再次输入密码"
+            /></label>
+            <div class="auth-optional register-field" hidden>
+              <label class="auth-field"
+                ><span>姓（可选）</span
+                ><input name="first_name" placeholder="姓" /></label
+              ><label class="auth-field"
+                ><span>名（可选）</span
+                ><input name="last_name" placeholder="名"
+              /></label>
+            </div>
+            <div class="auth-note">
+              <span class="note-mark">i</span
+              >设计预览，不会校验、提交或保存账号信息。
+            </div>
+            <p class="auth-error" id="auth-error" role="alert" hidden></p>
+            <button class="button button-blue auth-submit" id="auth-submit">
+              <span>登录并进入工作台</span><svg><use href="#arrow" /></svg>
+            </button>
+          </form>
+          <div class="auth-divider">
+            <span></span><small>开启你的研究旅程</small><span></span>
+          </div>
+          <p class="auth-switch" id="auth-switch">
+            还没有账户？<a href="#register">创建新账户 ↗</a>
+          </p>
+        </section>
+      </div>
+      <div class="auth-footer">研知协作 · 连接知识，让探索更进一步</div>
+    </main>
+    <button
+      class="tweaks-trigger"
+      id="tweaks-trigger"
+      aria-controls="tweaks"
+      aria-expanded="false"
+    >
+      <svg><use href="#tune" /></svg><span>Tweaks</span>
+    </button>
+    <aside id="tweaks" class="tweaks" hidden>
+      <div class="tweaks-head">
+        <strong>Tweaks</strong
+        ><button id="close-tweaks" aria-label="关闭预览设置">×</button>
+      </div>
+      <label
+        >页面<select id="page-select">
+          <option value="home">官网首页</option>
+          <option value="login">登录页</option>
+          <option value="register">注册页</option>
+          <option value="workspace">软件工作区</option>
+        </select></label
+      ><label
+        >外观<select id="theme-select">
+          <option value="dark">深空蓝</option>
+          <option value="light">亮色</option>
+        </select></label
+      ><label
+        >动效<select id="motion-select">
+          <option value="full">完整动效</option>
+          <option value="calm">舒缓动效</option>
+          <option value="static">静态</option>
+        </select></label
+      >
+      <p>
+        新版视觉概念 · 登录注册为预览流程。<br />移动鼠标可感受粒子场的空间变化。
+      </p>
+    </aside>
+    <script src="showcase.js"></script>
+  </body>
+</html>

@@ -1,5 +1,6 @@
 // frontend/src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
+import { accessRedirect } from '@/utils/auth'
 
 // 路由懒加载 - 所有页面组件按需加载
 const Login = () => import('@/views/login.vue')
@@ -15,6 +16,7 @@ const DataAnalysis = () => import('@/views/DataAnalysis.vue')
 const PaperWriting = () => import('@/views/PaperWriting.vue')
 
 const routes = [
+  { path: '/', name: 'home', component: () => import('@/views/Landing.vue') },
   {
     path: '/settings',
     name: 'settings',
@@ -88,31 +90,26 @@ const routes = [
     meta: { requiresAuth: true },
   },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
-  {
-    path: '/',
-    redirect: '/login',
-  },
 ]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash)
+      return {
+        el: to.hash,
+        top: 100,
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'instant'
+          : 'smooth',
+      }
+    return { top: 0 }
+  },
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem('access')
-
-  // 需要登录但未登录 → 跳转到登录页
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
-  }
-  // 已登录用户不能访问登录/注册页
-  else if (to.meta.requiresGuest && isAuthenticated) {
-    next('/dashboard')
-  } else {
-    next()
-  }
-})
+router.beforeEach((to) => accessRedirect(to, localStorage))
 
 export default router
